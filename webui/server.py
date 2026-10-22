@@ -67,7 +67,10 @@ PANEL_KEYS = [
     "ADMIN_EMAIL", "ADMIN_USERNAME", "ADMIN_FIRSTNAME", "ADMIN_LASTNAME", "ADMIN_PASSWORD",
 ]
 WINGS_KEYS = ["DBHOST", "DBHOST_USER", "DBHOST_PASSWORD", "DBHOST_ALLOW", "DBHOST_FIREWALL"]
-INSTALLERS = {"panel": ["panel"], "wings": ["wings"], "beide": ["panel", "wings"]}
+NODE_KEYS = ["NODE_NAME", "NODE_LOCATION", "NODE_PORTS", "NODE_FQDN", "PANEL_URL", "PANEL_API_KEY"]
+INSTALLERS = {"panel": ["panel"], "wings": ["wings"], "beide": ["panel", "wings"], "node": ["node"]}
+INSTALL_ACTIONS = ("panel", "wings", "beide")
+LOG_PATH = "/var/log/etheron-installer.log"
 
 STATIC_FILES = {
     "/": ("index.html", "text/html; charset=utf-8"),
@@ -110,6 +113,8 @@ def strip_ansi(text):
 
 
 def allowed_keys(action):
+    if action == "node":
+        return list(NODE_KEYS)
     keys = list(COMMON_KEYS)
     if "panel" in INSTALLERS[action]:
         keys += PANEL_KEYS
@@ -266,6 +271,7 @@ class Installer:
             "version": os.environ.get("ETHERON_VERSION", ""),
             "os": os_name(),
             "address": self.address,
+            "hostname": socket.gethostname().split(".")[0],
             "firewall": self.firewall_name,
             "webPort": self.port,
             "panelInstalled": os.path.isdir(PANEL_DIR),
@@ -337,6 +343,8 @@ class Installer:
             os.unlink(path)
 
     def check(self, action, settings):
+        if action not in INSTALL_ACTIONS:
+            raise ValueError("Kies wat je wilt installeren.")
         if self.job.summary()["state"] != "idle":
             return 409, {"ok": False, "message": "Er loopt al een installatie."}
         if not self.busy.acquire(blocking=False):
@@ -348,6 +356,8 @@ class Installer:
         return 200, {"ok": not errors, "errors": errors}
 
     def install(self, action, settings):
+        if action not in INSTALL_ACTIONS:
+            raise ValueError("Kies wat je wilt installeren.")
         if not self.busy.acquire(blocking=False):
             return 409, {"ok": False, "message": "Er loopt al een controle of installatie."}
         started = False
@@ -397,6 +407,39 @@ class Installer:
                 self.job.state = "done" if process.returncode == 0 else "failed"
                 self.job.finished_at = time.monotonic()
             self.busy.release()
+
+    def log_to_file(self, title, output):
+        """Voegt uitvoer toe aan het logbestand van de installer (voor support)."""
+        try:
+            fd = os.open(LOG_PATH, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+            with os.fdopen(fd, "a", encoding="utf-8") as handle:
+                handle.write("\n* %s: %s\n%s\n" % (time.strftime("%Y-%m-%d %H:%M:%S"), title, strip_ansi(output)))
+        except OSError:
+            pass
+
+    def link_node(self, settings):
+        """Maakt locatie, node en poorten aan in het panel en start Wings (installers/node.sh)."""
+        if self.job.summary()["state"] == "running":
+            return 409, {"ok": False, "message": "Wacht tot de installatie klaar is."}
+        if not os.path.exists("/usr/local/bin/wings"):
+            return 409, {"ok": False, "message": "Wings is nog niet geïnstalleerd op deze server."}
+        if not self.busy.acquire(blocking=False):
+            return 409, {"ok": False, "message": "Er loopt al een andere actie. Probeer het zo opnieuw."}
+        try:
+            path = write_private(self.work_dir, build_config("node", settings))
+            try:
+                code, output = self.run(["bash", self.script("installers", "node.sh"), path], 300)
+            finally:
+                os.unlink(path)
+        finally:
+            self.busy.release()
+
+        self.log_to_file("Node koppelen via de webinstaller", output)
+        lines = [line for line in strip_ansi(output).splitlines() if line.strip()]
+        if code == 0:
+            return 200, {"ok": True, "lines": lines}
+        errors = parse_errors(output) or [{"key": None, "message": "Koppelen is mislukt. Bekijk de details hieronder."}]
+        return 200, {"ok": False, "errors": errors, "lines": lines}
 
     def save_wings_config(self, text):
         """Zet de configuratie uit het panel op de node en start Wings."""
@@ -553,6 +596,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_json(*self.app.check(data.get("action"), data.get("settings")))
             if path == "/api/install":
                 return self.send_json(*self.app.install(data.get("action"), data.get("settings")))
+            if path == "/api/node":
+                return self.send_json(*self.app.link_node(data.get("settings")))
             if path == "/api/wings-config":
                 return self.send_json(*self.app.save_wings_config(data.get("config")))
             if path == "/api/close":

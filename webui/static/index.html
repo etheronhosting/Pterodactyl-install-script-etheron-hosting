@@ -246,18 +246,66 @@
 
         <div class="wings-config" id="wings-config" hidden>
           <h3>Node koppelen aan je panel</h3>
-          <ol class="steps-list">
-            <li>Log in op je panel en ga naar <strong>Admin → Nodes → Create New</strong>.</li>
-            <li id="wings-config-fqdn">Vul bij <strong>FQDN</strong> het domein of IP-adres van deze server in.</li>
-            <li>Open daarna het tabblad <strong>Configuration</strong> van de node en kopieer de tekst.</li>
-            <li>Plak die tekst hieronder en klik op <strong>Wings starten</strong>.</li>
-          </ol>
-          <textarea id="wings-config-text" rows="8" spellcheck="false" placeholder="debug: false&#10;uuid: ...&#10;token_id: ...&#10;token: ..."></textarea>
-          <div class="row">
-            <button type="button" class="btn primary" id="btn-wings-config">Wings starten</button>
+          <div id="node-form">
+            <p class="hint">We maken in je panel een locatie en een node aan, voegen poorten voor gameservers toe en starten Wings. Je hoeft daarvoor niets in het panel te doen.</p>
+
+            <div id="node-remote" hidden>
+              <div class="field">
+                <label for="panel-url">Adres van je panel</label>
+                <input id="panel-url" data-key="PANEL_URL" autocapitalize="off" spellcheck="false" placeholder="https://panel.jouwdomein.nl">
+                <p class="field-error" data-error-for="PANEL_URL" role="alert"></p>
+              </div>
+              <div class="field">
+                <label for="panel-api-key">API-sleutel van je panel</label>
+                <input id="panel-api-key" type="password" data-key="PANEL_API_KEY" autocomplete="off" spellcheck="false" placeholder="ptla_…">
+                <p class="hint">Maak in je panel een sleutel aan via <strong>Admin → Application API → Create New</strong>. Zet <strong>Locations</strong>, <strong>Nodes</strong> en <strong>Allocations</strong> op Read &amp; Write.</p>
+                <p class="field-error" data-error-for="PANEL_API_KEY" role="alert"></p>
+              </div>
+            </div>
+
+            <div class="grid">
+              <div class="field">
+                <label for="node-name">Naam van de node</label>
+                <input id="node-name" data-key="NODE_NAME" autocapitalize="off" spellcheck="false">
+                <p class="field-error" data-error-for="NODE_NAME" role="alert"></p>
+              </div>
+              <div class="field">
+                <label for="node-location">Locatie</label>
+                <input id="node-location" data-key="NODE_LOCATION" value="nl" autocapitalize="off" spellcheck="false">
+                <p class="hint">Korte naam, bijvoorbeeld nl of ams1. Bestaat hij al, dan gebruiken we die.</p>
+                <p class="field-error" data-error-for="NODE_LOCATION" role="alert"></p>
+              </div>
+            </div>
+            <div class="field">
+              <label for="node-ports">Poorten voor gameservers</label>
+              <input id="node-ports" data-key="NODE_PORTS" value="25565-25600" autocapitalize="off" spellcheck="false">
+              <p class="hint">Eén poort of een reeks van maximaal 1000 poorten. Ze gaan ook open in de firewall.</p>
+              <p class="field-error" data-error-for="NODE_PORTS" role="alert"></p>
+            </div>
+            <p class="hint" id="node-address"></p>
+            <div class="row">
+              <button type="button" class="btn primary" id="btn-node">Node aanmaken en Wings starten</button>
+            </div>
           </div>
-          <div class="notice" id="wings-config-result" hidden></div>
-          <pre class="log small" id="wings-config-log" hidden></pre>
+          <div class="notice" id="node-result" hidden></div>
+          <ul class="error-list" id="node-errors" hidden></ul>
+          <pre class="log small" id="node-log" hidden></pre>
+
+          <details class="advanced" id="manual-config">
+            <summary>Liever zelf koppelen in het panel?</summary>
+            <ol class="steps-list">
+              <li>Log in op je panel en ga naar <strong>Admin → Nodes → Create New</strong>.</li>
+              <li id="wings-config-fqdn">Vul bij <strong>FQDN</strong> het domein of IP-adres van deze server in.</li>
+              <li>Open daarna het tabblad <strong>Configuration</strong> van de node en kopieer de tekst.</li>
+              <li>Plak die tekst hieronder en klik op <strong>Wings starten</strong>.</li>
+            </ol>
+            <textarea id="wings-config-text" rows="8" spellcheck="false" placeholder="debug: false&#10;uuid: ...&#10;token_id: ...&#10;token: ..."></textarea>
+            <div class="row">
+              <button type="button" class="btn secondary" id="btn-wings-config">Wings starten</button>
+            </div>
+            <div class="notice" id="wings-config-result" hidden></div>
+            <pre class="log small" id="wings-config-log" hidden></pre>
+          </details>
         </div>
 
         <details class="log-details" id="log-details">

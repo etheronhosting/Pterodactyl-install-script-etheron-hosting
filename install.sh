@@ -42,6 +42,7 @@ Acties (zonder actie verschijnt een menu):
   wings          Pterodactyl Wings installeren
   beide          Panel en Wings op dezelfde server installeren
   verwijderen    Panel en/of Wings verwijderen
+  node           Wings koppelen aan een panel (alleen met --config)
 
 Opties:
   -c, --config BESTAND   Onbegeleid installeren met de instellingen uit BESTAND
@@ -109,7 +110,7 @@ parse_args() {
   while [ $# -gt 0 ]; do
     case "$1" in
     web | webui | browser) ACTION="web" ;;
-    panel | wings) ACTION="$1" ;;
+    panel | wings | node) ACTION="$1" ;;
     beide | both) ACTION="beide" ;;
     verwijderen | uninstall) ACTION="verwijderen" ;;
     -c | --config)
@@ -172,7 +173,12 @@ run_installers() {
   panel) installers=(panel) ;;
   wings) installers=(wings) ;;
   beide) installers=(panel wings) ;;
+  node) installers=(node) ;;
   esac
+  # Staan er NODE_*- of PANEL_*-instellingen in het bestand, koppel Wings dan meteen aan het panel.
+  if [[ "$ACTION" == wings || "$ACTION" == beide ]] && [ -n "${NODE_NAME:-}${NODE_LOCATION:-}${NODE_PORTS:-}${PANEL_URL:-}" ]; then
+    installers+=(node)
+  fi
 
   # Eerst alle instellingen controleren, zodat 'beide' niet halverwege stopt.
   for installer in "${installers[@]}"; do
@@ -233,19 +239,22 @@ detect_os
 
 if [ -n "$CONFIG_FILE" ]; then
   case "$ACTION" in
-  panel | wings | beide) ;;
+  panel | wings | beide | node) ;;
   verwijderen | web)
-    error "--config werkt alleen met panel, wings of beide."
+    error "--config werkt alleen met panel, wings, beide of node."
     exit 1
     ;;
   *)
-    error "Geef bij --config ook aan wat je wilt installeren: panel, wings of beide."
+    error "Geef bij --config ook aan wat je wilt doen: panel, wings, beide of node."
     exit 1
     ;;
   esac
   [[ "$CONFIG_FILE" == /* ]] || CONFIG_FILE="$PWD/$CONFIG_FILE"
   load_config "$CONFIG_FILE" || exit 1
   export UNATTENDED=true
+elif [ "$ACTION" == "node" ]; then
+  error "Koppelen kan via de webinstaller (install.sh web) of onbegeleid met --config."
+  exit 1
 elif [ "$ACTION" == "web" ]; then
   # De webinstaller stelt geen vragen in de terminal en logt de installatie zelf;
   # buiten het logbestand houden, want de link bevat een toegangstoken.

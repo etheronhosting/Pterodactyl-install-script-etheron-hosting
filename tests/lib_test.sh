@@ -115,6 +115,29 @@ pass_if "databasehost lokaal" valid_dbhost_allow 127.0.0.1
 pass_if "databasehost hostnaam" valid_dbhost_allow panel.etheron.nl
 fail_if "databasehost ongeldig" valid_dbhost_allow "pan el"
 
+pass_if "node-naam met spatie" valid_node_name "Node 1"
+pass_if "node-naam met punt" valid_node_name node1.etheron
+fail_if "node-naam met slash" valid_node_name "node/1"
+fail_if "node-naam met backslash" valid_node_name 'node\1'
+fail_if "lege node-naam" valid_node_name ""
+pass_if "locatie" valid_location_short ams1
+fail_if "locatie met spatie" valid_location_short "ams 1"
+pass_if "poortreeks" valid_port_range 25565-25600
+pass_if "één poort" valid_port_range 25565
+pass_if "reeks van precies 1000 poorten" valid_port_range 30000-30999
+fail_if "reeks van 1001 poorten" valid_port_range 30000-31000
+fail_if "poort onder 1025" valid_port_range 1024-1100
+fail_if "poort boven 65535" valid_port_range 65000-65536
+fail_if "omgekeerde reeks" valid_port_range 25600-25565
+fail_if "poort met letters" valid_port_range "25565-abc"
+pass_if "panel-url https" valid_panel_url https://panel.etheron.nl
+pass_if "panel-url met poort en slash" valid_panel_url http://192.0.2.10:8080/
+fail_if "panel-url zonder schema" valid_panel_url panel.etheron.nl
+fail_if "panel-url met pad" valid_panel_url "https://panel.etheron.nl/admin"
+pass_if "API-sleutel" valid_api_key ptla_AbCdEfGhIjKlMnOpQrStUvWxYz0123456789abcdefg
+fail_if "client-sleutel is geen applicatiesleutel" valid_api_key ptlc_AbCdEfGhIjKlMnOpQrStUvWxYz0123456789
+fail_if "API-sleutel te kort" valid_api_key ptla_abc
+
 pass_if "release-tag" valid_release_tag v1.11.13
 fail_if "release-tag zonder v" valid_release_tag 1.11.13
 pass_if "panel-versie 2" valid_panel_version 2

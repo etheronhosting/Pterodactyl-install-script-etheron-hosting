@@ -44,7 +44,7 @@ Wat er gebeurt:
 2. In de terminal verschijnt een link met een eenmalige toegangscode, bijvoorbeeld `https://203.0.113.10:8443/?token=…`. De browser waarschuwt voor het certificaat; dat is verwacht. De vingerafdruk staat in de terminal.
 3. De wizard vraagt wat je wilt installeren (panel, Wings of beide), het domein en HTTPS, het beheerdersaccount en de Wings-opties. Het domein wordt meteen gecontroleerd, en alle instellingen worden op de server gecontroleerd voordat er iets gebeurt.
 4. Tijdens de installatie zie je de voortgang live. Je kunt de pagina sluiten en later opnieuw openen met dezelfde link.
-5. Na een Wings-installatie plak je de configuratie van de node uit het panel in de wizard. De wizard zet die neer en start Wings.
+5. Na een Wings-installatie koppelt de wizard de node met één klik aan het panel. Hij maakt een locatie, een node en poorten voor gameservers aan, zet die poorten open in de firewall en start Wings. Staat het panel op dezelfde server (Panel en Wings), dan is daar niets extra's voor nodig. Staat het panel elders, dan vul je het adres van het panel en een Application API-sleutel in (Admin → Application API, Read & Write op Locations, Nodes en Allocations). Liever handmatig? Plak dan de configuratie van de node uit het panel.
 
 De webinstaller stopt vanzelf 30 minuten na de installatie, na een uur zonder gebruik, of als je op "Webinstaller afsluiten" klikt. Zelf stoppen kan met `systemctl stop etheron-webinstaller`. Poort 8443 gaat alleen open zolang de webinstaller draait. Een andere poort kies je met `ETHERON_WEB_PORT=9443` voor het commando. Achter een firewall van de hostingprovider moet die poort ook daar open staan.
 
@@ -120,6 +120,13 @@ Hoe het werkt:
 | `DBHOST_USER`, `DBHOST_PASSWORD` | wings | `pterodactyluser`, verplicht | Databasehost-gebruiker |
 | `DBHOST_ALLOW` | wings | `127.0.0.1` | Toegang vanaf: `127.0.0.1`, `%` of IP/hostnaam van het panel |
 | `DBHOST_FIREWALL` | wings | `false` | Poort 3306 openen (alleen voor `DBHOST_ALLOW` als dat een IP is) |
+| `NODE_NAME` | node | hostnaam | Naam van de node in het panel |
+| `NODE_LOCATION` | node | `nl` | Korte naam van de locatie; bestaat hij al, dan wordt hij gebruikt |
+| `NODE_PORTS` | node | `25565-25600` | Poorten voor gameservers (max. 1000), gaan ook open in de firewall |
+| `NODE_FQDN` | node | domein met certificaat, anders IP | Adres waarop het panel Wings bereikt |
+| `PANEL_URL`, `PANEL_API_KEY` | node | leeg | Alleen als het panel op een andere server staat |
+
+Staat er een `NODE_*`- of `PANEL_*`-instelling in het bestand, dan koppelt `wings` of `beide` Wings na de installatie meteen aan het panel. Alleen koppelen kan met `./install.sh node --config bestand.conf`.
 
 ## Poorten
 

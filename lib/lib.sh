@@ -75,6 +75,7 @@ CONFIG_KEYS=(
   DB_NAME DB_USER DB_PASSWORD
   ADMIN_EMAIL ADMIN_USERNAME ADMIN_FIRSTNAME ADMIN_LASTNAME ADMIN_PASSWORD
   WINGS_RELEASE DBHOST DBHOST_USER DBHOST_PASSWORD DBHOST_ALLOW DBHOST_FIREWALL
+  NODE_NAME NODE_LOCATION NODE_PORTS NODE_FQDN PANEL_URL PANEL_API_KEY
 )
 
 # Aantal fouten gevonden door check_setting.
@@ -467,6 +468,32 @@ valid_dbhost_allow() {
   [[ "$1" == "%" ]] || valid_hostname "$1"
 }
 
+valid_node_name() {
+  local re='^[A-Za-z0-9_ .-]{1,100}$'
+  [[ "$1" =~ $re ]]
+}
+
+valid_location_short() {
+  [[ "$1" =~ ^[A-Za-z0-9_.-]{1,60}$ ]]
+}
+
+# Eén poort of een reeks (bijv. 25565-25600) tussen 1025 en 65535, maximaal 1000 poorten.
+valid_port_range() {
+  local start end
+  [[ "$1" =~ ^([0-9]{4,5})(-([0-9]{4,5}))?$ ]] || return 1
+  start=$((10#${BASH_REMATCH[1]}))
+  end=$((10#${BASH_REMATCH[3]:-${BASH_REMATCH[1]}}))
+  ((start >= 1025 && end <= 65535 && start <= end && end - start < 1000))
+}
+
+valid_panel_url() {
+  [[ "$1" =~ ^https?://[A-Za-z0-9.-]+(:[0-9]{1,5})?/?$ ]]
+}
+
+valid_api_key() {
+  [[ "$1" =~ ^ptla_[A-Za-z0-9]{20,}$ ]]
+}
+
 valid_admin_username() {
   [[ "$1" =~ ^[a-zA-Z0-9][a-zA-Z0-9_.-]+[a-zA-Z0-9]$ && ${#1} -le 191 ]]
 }
@@ -833,6 +860,12 @@ describe_setting() {
   DBHOST_PASSWORD) echo "Databasehost: wachtwoord" ;;
   DBHOST_ALLOW) echo "Databasehost: toegang vanaf" ;;
   DBHOST_FIREWALL) echo "Databasehost: poort 3306 open" ;;
+  NODE_NAME) echo "Node: naam" ;;
+  NODE_LOCATION) echo "Node: locatie" ;;
+  NODE_PORTS) echo "Node: poorten voor gameservers" ;;
+  NODE_FQDN) echo "Node: adres" ;;
+  PANEL_URL) echo "Panel-adres" ;;
+  PANEL_API_KEY) echo "API-sleutel van het panel" ;;
   *) echo "$1" ;;
   esac
 }
@@ -846,7 +879,7 @@ print_config_summary() {
   for key in "${CONFIG_KEYS[@]}"; do
     value="${!key}"
     [ -n "$value" ] || continue
-    case "$key" in *PASSWORD) value="(verborgen)" ;; esac
+    case "$key" in *PASSWORD | *API_KEY) value="(verborgen)" ;; esac
     case "$value" in
     true) value="ja" ;;
     false) value="nee" ;;
@@ -877,6 +910,16 @@ public_addresses() {
     curl -4 -fsS --max-time 5 "$CHECKIP_URL_V4" 2>/dev/null || true
     curl -6 -fsS --max-time 5 "$CHECKIP_URL_V6" 2>/dev/null || true
   } | tr -d ' \r' | tr 'A-F' 'a-f' | { grep -E '^[0-9a-f:.]+$' || true; } | LC_ALL=C sort -u
+}
+
+# Adres waarop deze server van buitenaf bereikbaar is: bij voorkeur het publieke IPv4-adres.
+server_address() {
+  local address=""
+  address=$(public_addresses | grep -v ':' | head -n1) || true
+  [ -n "$address" ] || address=$(local_addresses | grep -v ':' | head -n1) || true
+  [ -n "$address" ] || address=$(public_addresses | head -n1) || true
+  [ -n "$address" ] || address=$(local_addresses | head -n1) || true
+  echo "$address"
 }
 
 # Controleert of alle A- en AAAA-records van $1 naar deze server wijzen. Let's

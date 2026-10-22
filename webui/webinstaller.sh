@@ -39,16 +39,6 @@ UNIT="etheron-webinstaller"
 WEB_PORT="${ETHERON_WEB_PORT:-8443}"
 WORK_PREFIX="/tmp/etheron-webinstaller."
 
-# Adres voor de link: bij voorkeur het publieke IPv4-adres.
-server_address() {
-  local address=""
-  address=$(public_addresses | grep -v ':' | head -n1) || true
-  [ -n "$address" ] || address=$(local_addresses | grep -v ':' | head -n1) || true
-  [ -n "$address" ] || address=$(public_addresses | head -n1) || true
-  [ -n "$address" ] || address=$(local_addresses | head -n1) || true
-  echo "$address"
-}
-
 port_in_use() {
   ss -ltn 2>/dev/null | awk 'NR > 1 { print $4 }' | grep -qE "[:.]$1\$"
 }

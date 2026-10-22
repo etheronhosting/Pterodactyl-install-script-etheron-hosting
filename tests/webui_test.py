@@ -45,6 +45,15 @@ class BuildConfigTest(unittest.TestCase):
         self.assertIn('DBHOST="true"', text)
         self.assertIn('ADMIN_USERNAME="beheerder"', text)
 
+    def test_node_allows_only_node_keys(self):
+        text = server.build_config("node", {"NODE_NAME": "node1", "PANEL_API_KEY": "ptla_abc"})
+        self.assertIn('NODE_NAME="node1"', text)
+        self.assertIn('PANEL_API_KEY="ptla_abc"', text)
+        with self.assertRaises(ValueError):
+            server.build_config("node", {"ADMIN_PASSWORD": "geheim123"})
+        with self.assertRaises(ValueError):
+            server.build_config("wings", {"NODE_NAME": "node1"})
+
     def test_control_characters_rejected(self):
         for value in ("a\nFIREWALL=true", "a\rb", "a\x00b", "a\tb"):
             with self.assertRaises(ValueError):

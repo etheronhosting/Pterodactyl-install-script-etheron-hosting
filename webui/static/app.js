@@ -56,6 +56,20 @@ const IDENTIFIER_RE = /^[a-zA-Z0-9_]{1,64}$/;
 const DB_PASSWORD_BAD = /[\s'"\\$`#]/;
 const DB_PASSWORD_MESSAGE = 'Geen spaties, aanhalingstekens, \\, $, # of ` (maximaal 128 tekens).';
 
+// Velden van 'Node koppelen' (na de installatie).
+const NODE_LABELS = {
+  NODE_NAME: 'Naam van de node',
+  NODE_LOCATION: 'Locatie',
+  NODE_PORTS: 'Poorten',
+  NODE_FQDN: 'Adres van de node',
+  PANEL_URL: 'Adres van je panel',
+  PANEL_API_KEY: 'API-sleutel',
+};
+const NODE_NAME_RE = /^[A-Za-z0-9_ .-]{1,100}$/;
+const LOCATION_RE = /^[A-Za-z0-9_.-]{1,60}$/;
+const PANEL_URL_RE = /^https?:\/\/[A-Za-z0-9.-]+(:\d{1,5})?\/?$/;
+const API_KEY_RE = /^ptla_[A-Za-z0-9]{20,}$/;
+
 const state = {
   info: null,
   action: null,
@@ -699,12 +713,13 @@ function finish(data) {
     }
     if (wings) {
       result.append(el('h3', { text: panel ? 'Wings is ook geïnstalleerd' : 'Wings is geïnstalleerd' }),
-        el('p', { text: 'Koppel deze node nog aan je panel; dat kan hieronder.' }));
+        el('p', { id: 'wings-next', text: 'Koppel deze node nog aan je panel; dat kan hieronder.' }));
       const fqdn = findLine(/^\*\s+\/etc\/letsencrypt\/live\/([^/]+)\//);
       const host = fqdn ? fqdn[1] : (state.info ? state.info.address : 'het IP-adres van deze server');
       $('#wings-config-fqdn').textContent = '';
       $('#wings-config-fqdn').append('Vul bij ', el('strong', { text: 'FQDN' }), ` ${host} in en kies bij SSL voor ` +
         (fqdn ? '"Use SSL Connection".' : '"Use HTTP Connection".'));
+      setupNodeForm(host, Boolean(fqdn));
       $('#wings-config').hidden = false;
     }
   } else {
@@ -723,6 +738,108 @@ function finish(data) {
   $('#close-row').hidden = false;
 }
 
+// ---------------- Node koppelen ---------------- //
+
+function setupNodeForm(host, https) {
+  state.nodeFqdn = host;
+  // Staat het panel niet op deze server, dan is er een API-sleutel van het panel nodig.
+  const remote = state.action === 'wings' && !(state.info && state.info.panelInstalled);
+  $('#node-remote').hidden = !remote;
+  const name = $('#node-name');
+  if (!name.value) {
+    const hostname = (state.info && state.info.hostname) || '';
+    name.value = hostname.replace(/[^A-Za-z0-9_ .-]/g, '').slice(0, 100) || 'node1';
+  }
+  $('#node-address').textContent = `Wings wordt bereikbaar op ${https ? 'https' : 'http'}://${host}:8080.`;
+}
+
+function validPortRange(value) {
+  const match = value.match(/^(\d{4,5})(?:-(\d{4,5}))?$/);
+  if (!match) return false;
+  const start = Number(match[1]);
+  const end = Number(match[2] || match[1]);
+  return start >= 1025 && end <= 65535 && start <= end && end - start < 1000;
+}
+
+function validateNodeForm() {
+  const form = $('#node-form');
+  clearErrors(form);
+  let ok = true;
+  if (!NODE_NAME_RE.test(val('node-name'))) ok = setError('NODE_NAME', 'Letters, cijfers, spaties, -, _ en . (maximaal 100 tekens).');
+  if (!LOCATION_RE.test(val('node-location'))) ok = setError('NODE_LOCATION', 'Een korte naam zoals nl: letters, cijfers, -, _ en .');
+  if (!validPortRange(val('node-ports'))) {
+    ok = setError('NODE_PORTS', 'Eén poort of een reeks zoals 25565-25600, tussen 1025 en 65535, maximaal 1000 poorten.');
+  }
+  if (!$('#node-remote').hidden) {
+    if (!PANEL_URL_RE.test(val('panel-url'))) ok = setError('PANEL_URL', 'Vul het adres van je panel in, bijvoorbeeld https://panel.jouwdomein.nl.');
+    if (!API_KEY_RE.test(val('panel-api-key'))) ok = setError('PANEL_API_KEY', 'Plak de volledige sleutel; die begint met ptla_.');
+  }
+  if (!ok) focusFirstError(form);
+  return ok;
+}
+
+async function linkNode() {
+  if (!validateNodeForm()) return;
+  const button = $('#btn-node');
+  const notice = $('#node-result');
+  const list = $('#node-errors');
+  const log = $('#node-log');
+  const settings = {
+    NODE_NAME: val('node-name'),
+    NODE_LOCATION: val('node-location'),
+    NODE_PORTS: val('node-ports'),
+    NODE_FQDN: state.nodeFqdn,
+  };
+  if (!$('#node-remote').hidden) {
+    settings.PANEL_URL = val('panel-url');
+    settings.PANEL_API_KEY = val('panel-api-key');
+  }
+
+  button.disabled = true;
+  button.textContent = 'Bezig met koppelen… (ongeveer een halve minuut)';
+  notice.hidden = true;
+  list.hidden = true;
+  log.hidden = true;
+  try {
+    const data = await api('/api/node', { settings });
+    if (data.lines && data.lines.length) appendLog(['', '--- Node koppelen ---', ...data.lines]);
+    if (data.ok) {
+      notice.className = 'notice ok';
+      notice.textContent = 'Je node is gekoppeld en Wings draait. In het panel staat hij onder Admin → Nodes; het hartje wordt binnen een minuut groen.';
+      notice.hidden = false;
+      $('#node-form').hidden = true;
+      $('#manual-config').hidden = true;
+      if ($('#wings-next')) $('#wings-next').textContent = 'Deze node is gekoppeld aan je panel.';
+      return;
+    }
+    if (data.httpStatus === 409) {
+      notice.className = 'notice warn';
+      notice.textContent = data.message || 'Dit kan nu niet.';
+      notice.hidden = false;
+      return;
+    }
+    list.replaceChildren();
+    for (const error of data.errors || []) {
+      const label = error.key ? NODE_LABELS[error.key] : null;
+      if (label) setError(error.key, error.message);
+      list.append(el('li', {}, label ? el('strong', { text: label + ': ' }) : '', error.message));
+    }
+    list.hidden = false;
+    if (data.lines && data.lines.length) {
+      log.textContent = data.lines.slice(-25).join('\n');
+      log.hidden = false;
+    }
+  } catch (error) {
+    if (error instanceof Forbidden) return;
+    notice.className = 'notice err';
+    notice.textContent = 'Koppelen is niet gelukt door een verbindingsfout. Probeer het opnieuw.';
+    notice.hidden = false;
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Node aanmaken en Wings starten';
+  }
+}
+
 async function saveWingsConfig() {
   const button = $('#btn-wings-config');
   const notice = $('#wings-config-result');
@@ -734,6 +851,7 @@ async function saveWingsConfig() {
     const data = await api('/api/wings-config', { config: $('#wings-config-text').value });
     notice.className = 'notice ' + (data.ok ? 'ok' : 'err');
     notice.textContent = data.message || (data.ok ? 'Wings draait.' : 'Er ging iets mis.');
+    if (data.ok) $('#node-form').hidden = true;
     if (data.log) {
       log.textContent = data.log;
       log.hidden = false;
@@ -798,6 +916,7 @@ function bindEvents() {
   $('#btn-next').addEventListener('click', onNext);
   $('#btn-back').addEventListener('click', () => showStep(Math.max(0, state.index - 1)));
   $('#btn-wings-config').addEventListener('click', saveWingsConfig);
+  $('#btn-node').addEventListener('click', linkNode);
   $('#btn-close').addEventListener('click', closeInstaller);
 
   // Enter in een invoerveld = Volgende.
