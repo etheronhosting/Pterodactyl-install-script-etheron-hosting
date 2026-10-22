@@ -1,0 +1,22 @@
+name: Controles
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: ShellCheck draaien
+        run: shellcheck -x install.sh lib/*.sh ui/*.sh installers/*.sh tests/*.sh
+
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unittests draaien
+        run: bash tests/lib_test.sh

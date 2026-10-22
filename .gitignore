@@ -1,0 +1,7 @@
+.vagrant/
+
+# Echte instellingenbestanden bevatten wachtwoorden: niet committen.
+*.local.conf
+
+# Lokale status van Claude-plugins
+.claude-flow/
