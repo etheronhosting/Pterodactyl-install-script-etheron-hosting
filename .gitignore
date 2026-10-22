@@ -5,3 +5,6 @@
 
 # Lokale status van Claude-plugins
 .claude-flow/
+
+# Python-cache (ontstaat bij het draaien van de tests)
+__pycache__/
