@@ -8,6 +8,7 @@ Eerste versie, gebaseerd op [pterodactyl-installer v1.4.0](https://github.com/pt
 
 ### Toegevoegd
 
+- Webinstaller (`install.sh web`): een tijdelijke HTTPS-wizard op de server voor klanten, met domeincontrole, live voortgang en Wings koppelen via de browser.
 - Onbegeleide installatie met `--config <bestand>` en voorbeeldbestanden in `voorbeelden/`.
 - Alle instellingen worden gecontroleerd voordat er iets wordt geïnstalleerd, ook bij panel en Wings samen.
 - Het beheerderswachtwoord moet twee keer ingevoerd worden.

@@ -1,0 +1,767 @@
+/* Etheron-webinstaller. Pas --accent aan voor de huisstijlkleur. */
+
+:root {
+  --bg: #f4f6fa;
+  --card: #ffffff;
+  --text: #182033;
+  --muted: #5a6478;
+  --border: #dce2ec;
+  --input: #ffffff;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-text: #ffffff;
+  --accent-soft: #eef0ff;
+  --ok: #15803d;
+  --ok-soft: #e7f6ec;
+  --warn: #a15c07;
+  --warn-soft: #fff5e5;
+  --err: #b42318;
+  --err-soft: #fdeceb;
+  --log-bg: #0f1522;
+  --log-text: #d6dbe6;
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 10px 30px rgba(16, 24, 40, 0.06);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d121c;
+    --card: #151c2a;
+    --text: #e6e9f0;
+    --muted: #9aa4b8;
+    --border: #283247;
+    --input: #101624;
+    --accent: #8b85ff;
+    --accent-hover: #a29dff;
+    --accent-text: #0d121c;
+    --accent-soft: #222844;
+    --ok: #4ade80;
+    --ok-soft: #12291c;
+    --warn: #fbbf24;
+    --warn-soft: #2b2210;
+    --err: #f87171;
+    --err-soft: #2e1515;
+    --log-bg: #090d15;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.25);
+    color-scheme: dark;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+a {
+  color: var(--accent);
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+  margin: 0 0 0.5rem;
+}
+
+h1 {
+  font-size: 1.6rem;
+}
+
+h2 {
+  font-size: 1.35rem;
+}
+
+h3 {
+  font-size: 1.05rem;
+  margin-top: 1.5rem;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* Koppen krijgen focus bij een nieuwe stap (voor schermlezers), zonder zichtbare rand. */
+[tabindex="-1"]:focus {
+  outline: none;
+}
+
+/* ---------------- Kop en voet ---------------- */
+
+.topbar {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar-inner {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0.85rem 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.brand-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 800;
+}
+
+.server-info {
+  color: var(--muted);
+  font-size: 0.875rem;
+  text-align: right;
+}
+
+.footer {
+  max-width: 760px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.5rem 16px 2rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+/* ---------------- Opbouw ---------------- */
+
+.container {
+  flex: 1;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 1.5rem 16px 0;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 2rem;
+}
+
+.lead {
+  color: var(--muted);
+  margin: 0 0 1.5rem;
+}
+
+.loading {
+  color: var(--muted);
+  text-align: center;
+  padding: 3rem 0;
+}
+
+/* ---------------- Stappen ---------------- */
+
+.stepper {
+  list-style: none;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+}
+
+.stepper li {
+  flex: 1 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.stepper .num {
+  display: inline-grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--card);
+}
+
+.stepper li.current {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.stepper li.current .num {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.stepper li.done .num {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ---------------- Keuzes ---------------- */
+
+.choices {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.choice {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  padding: 1rem 1.1rem;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.choice:hover {
+  border-color: var(--accent);
+}
+
+.choice:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.choice:has(input:disabled) {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.choice input {
+  margin-top: 0.3rem;
+}
+
+.choice-body {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.choice-body span {
+  color: var(--muted);
+  font-size: 0.925rem;
+}
+
+/* ---------------- Formulier ---------------- */
+
+.field {
+  margin: 0 0 1.25rem;
+  min-width: 0;
+}
+
+fieldset.field {
+  border: 0;
+  padding: 0;
+}
+
+label,
+legend {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input:not([type]),
+select,
+textarea {
+  width: 100%;
+  font: inherit;
+  color: var(--text);
+  background: var(--input);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+textarea {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+input[aria-invalid="true"],
+select[aria-invalid="true"] {
+  border-color: var(--err);
+}
+
+.radio,
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-weight: 400;
+  margin: 0 0 0.6rem;
+  cursor: pointer;
+}
+
+.radio input,
+.check input {
+  margin-top: 0.3rem;
+  accent-color: var(--accent);
+  flex: none;
+}
+
+.choice input {
+  accent-color: var(--accent);
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin: 0.35rem 0 0;
+}
+
+.field-error {
+  color: var(--err);
+  font-size: 0.875rem;
+  margin: 0.35rem 0 0;
+}
+
+.field-error:empty {
+  display: none;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 0.05rem 0.55rem;
+  margin-left: 0.25rem;
+  white-space: nowrap;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1rem;
+}
+
+.indent {
+  margin: 0.75rem 0 0 1.6rem;
+}
+
+.advanced {
+  margin: 1.25rem 0 0;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+
+.advanced summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+/* ---------------- Meldingen ---------------- */
+
+.notice {
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  background: var(--accent-soft);
+  margin: 1rem 0 0;
+}
+
+.notice.ok {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.notice.warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.notice.err {
+  background: var(--err-soft);
+  color: var(--err);
+}
+
+.dns {
+  margin: 0 0 1.25rem;
+}
+
+.dns-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.dns-head .hint {
+  margin: 0;
+}
+
+.dns-result {
+  margin: 0.75rem 0;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+}
+
+.dns-result.ok {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.dns-result.err {
+  background: var(--err-soft);
+  color: var(--err);
+}
+
+.dns-result p {
+  margin: 0.15rem 0;
+  overflow-wrap: anywhere;
+}
+
+.error-list {
+  margin: 1rem 0 0;
+  padding: 0.75rem 1rem 0.75rem 2rem;
+  border-radius: 10px;
+  background: var(--err-soft);
+  color: var(--err);
+}
+
+.error-list li {
+  margin: 0.2rem 0;
+}
+
+.error-list button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ---------------- Overzicht ---------------- */
+
+.summary {
+  display: grid;
+  grid-template-columns: minmax(0, 13rem) minmax(0, 1fr);
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.summary dt,
+.summary dd {
+  margin: 0;
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.summary dt {
+  color: var(--muted);
+}
+
+.summary dd {
+  overflow-wrap: anywhere;
+}
+
+.summary dt:last-of-type,
+.summary dd:last-of-type {
+  border-bottom: 0;
+}
+
+.summary .group {
+  grid-column: 1 / -1;
+  font-weight: 700;
+  background: var(--bg);
+}
+
+/* ---------------- Knoppen ---------------- */
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.btn {
+  font: inherit;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 0.65rem 1.3rem;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+
+.btn.small {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.9rem;
+}
+
+.btn.primary {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.btn.primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.btn.secondary {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.btn.secondary:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.btn:focus-visible,
+.choice:focus-within {
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 2px;
+}
+
+.row {
+  margin-top: 0.75rem;
+}
+
+/* ---------------- Installatie ---------------- */
+
+.progress {
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.progress li {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.35rem 0;
+  color: var(--muted);
+}
+
+.progress .icon {
+  flex: none;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: inline-grid;
+  place-items: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.progress li.active {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.progress li.active .icon {
+  border-color: var(--accent);
+  border-top-color: transparent;
+  animation: spin 0.9s linear infinite;
+}
+
+.progress li.done {
+  color: var(--text);
+}
+
+.progress li.done .icon {
+  border-color: var(--ok);
+  background: var(--ok);
+  color: var(--card);
+}
+
+.progress li.failed .icon {
+  border-color: var(--err);
+  background: var(--err);
+  color: var(--card);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress li.active .icon {
+    animation: none;
+    border-top-color: var(--accent);
+  }
+}
+
+.result {
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem;
+  margin: 0 0 1.5rem;
+}
+
+.result.ok {
+  background: var(--ok-soft);
+}
+
+.result.err {
+  background: var(--err-soft);
+}
+
+.result h3 {
+  margin-top: 0;
+}
+
+.result p {
+  margin: 0.4rem 0;
+}
+
+.result .big-link {
+  font-size: 1.1rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.wings-config {
+  border-top: 1px solid var(--border);
+  padding-top: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.steps-list {
+  padding-left: 1.25rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.steps-list li {
+  margin: 0.25rem 0;
+}
+
+.log-details summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.log {
+  margin: 0.75rem 0 0;
+  background: var(--log-bg);
+  color: var(--log-text);
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  max-height: 22rem;
+  overflow: auto;
+  font: 0.78rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.log.small {
+  max-height: 12rem;
+}
+
+.close-row {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.close-row .hint {
+  margin-bottom: 0.75rem;
+}
+
+/* ---------------- Telefoon ---------------- */
+
+@media (max-width: 600px) {
+  .card {
+    padding: 1.25rem;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary {
+    grid-template-columns: 1fr;
+  }
+
+  .summary dt {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .stepper .label {
+    display: none;
+  }
+
+  .stepper li.current .label {
+    display: inline;
+  }
+
+  .server-info {
+    display: none;
+  }
+
+  .indent {
+    margin-left: 0;
+  }
+}

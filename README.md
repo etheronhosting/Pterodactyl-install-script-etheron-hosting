@@ -9,6 +9,7 @@ Installatiescripts voor [Pterodactyl](https://pterodactyl.io/) Panel en Wings, z
 - **Beide**: panel en Wings op één server, met hetzelfde domein en certificaat.
 - **Verwijderen**: panel en/of Wings, met per database, gebruiker en certificaat een bevestiging.
 - **Firewall**: UFW (Debian/Ubuntu) of firewalld (Rocky/AlmaLinux), met de SSH-poort die sshd echt gebruikt.
+- **Webinstaller**: dezelfde installatie via een wizard in de browser, bedoeld voor klanten.
 
 Etheron-standaarden: tijdzone `Europe/Amsterdam`, telemetrie standaard uit.
 
@@ -27,6 +28,28 @@ Architectuur: x86_64 of arm64. Panel v2 is experimenteel (pre-release).
 
 Draai alles als root.
 
+### Via de browser (webinstaller)
+
+De makkelijkste route voor klanten: één commando op de server, daarna gaat alles in de browser.
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/etheronhosting/Pterodactyl-install-script-etheron-hosting/main/install.sh) web
+```
+
+Zolang release `v1.0.0` nog niet is getagd, zet je er `ETHERON_REF=main` voor (zie hieronder).
+
+Wat er gebeurt:
+
+1. De installer zet Python 3 en OpenSSL klaar, maakt een tijdelijk certificaat en start een webpagina op poort 8443. Die draait als systemd-service (`etheron-webinstaller`), dus het SSH-venster mag daarna dicht.
+2. In de terminal verschijnt een link met een eenmalige toegangscode, bijvoorbeeld `https://203.0.113.10:8443/?token=…`. De browser waarschuwt voor het certificaat; dat is verwacht. De vingerafdruk staat in de terminal.
+3. De wizard vraagt wat je wilt installeren (panel, Wings of beide), het domein en HTTPS, het beheerdersaccount en de Wings-opties. Het domein wordt meteen gecontroleerd, en alle instellingen worden op de server gecontroleerd voordat er iets gebeurt.
+4. Tijdens de installatie zie je de voortgang live. Je kunt de pagina sluiten en later opnieuw openen met dezelfde link.
+5. Na een Wings-installatie plak je de configuratie van de node uit het panel in de wizard. De wizard zet die neer en start Wings.
+
+De webinstaller stopt vanzelf 30 minuten na de installatie, na een uur zonder gebruik, of als je op "Webinstaller afsluiten" klikt. Zelf stoppen kan met `systemctl stop etheron-webinstaller`. Poort 8443 gaat alleen open zolang de webinstaller draait. Een andere poort kies je met `ETHERON_WEB_PORT=9443` voor het commando. Achter een firewall van de hostingprovider moet die poort ook daar open staan.
+
+Beveiliging: zonder de code uit de link is de wizard niet bereikbaar. Het verkeer loopt via HTTPS, en de code staat niet in het logbestand. Instellingenbestanden met wachtwoorden worden meteen na gebruik verwijderd.
+
 ### Met de one-liner
 
 Werkt zodra de release uit `ETHERON_VERSION` als tag op GitHub staat (zie [Een release maken](#een-release-maken)). De repository moet daarvoor publiek zijn.
@@ -36,6 +59,12 @@ bash <(curl -fsSL https://raw.githubusercontent.com/etheronhosting/Pterodactyl-i
 ```
 
 Gebruik `bash <(curl ...)` en niet `curl ... | bash`: de installer stelt vragen en heeft daarvoor de terminal nodig. Het script haalt de release op die in `ETHERON_VERSION` staat en draait die lokaal vanuit een tijdelijke map.
+
+Testen zonder release: met `ETHERON_REF=main` haalt de one-liner de nieuwste code van `main` op in plaats van de release.
+
+```bash
+ETHERON_REF=main bash <(curl -fsSL https://raw.githubusercontent.com/etheronhosting/Pterodactyl-install-script-etheron-hosting/main/install.sh)
+```
 
 ### Vanuit een clone
 

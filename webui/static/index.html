@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pterodactyl installeren · Etheron</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Ctext x='16' y='22.5' font-family='Arial,sans-serif' font-size='18' font-weight='800' fill='%23fff' text-anchor='middle'%3EE%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">E</span><span>Etheron</span></div>
+      <span class="server-info" id="server-info"></span>
+    </div>
+  </header>
+
+  <main class="container">
+    <ol class="stepper" id="stepper" aria-label="Stappen"></ol>
+
+    <div class="card" id="wizard" hidden>
+
+      <!-- Stap: keuze -->
+      <section data-step="keuze" hidden>
+        <h1>Pterodactyl installeren</h1>
+        <p class="lead">Deze wizard installeert Pterodactyl op je server. Je vult alles hier in; de installer doet de rest.</p>
+        <div class="choices" role="radiogroup" aria-label="Wat wil je installeren?">
+          <label class="choice">
+            <input type="radio" name="action" value="panel">
+            <span class="choice-body">
+              <strong>Panel</strong>
+              <span>De website waarin je gameservers aanmaakt en beheert.</span>
+            </span>
+          </label>
+          <label class="choice">
+            <input type="radio" name="action" value="wings">
+            <span class="choice-body">
+              <strong>Wings (node)</strong>
+              <span>Draait de gameservers zelf. Installeer Wings op elke server waar gameservers op moeten komen.</span>
+            </span>
+          </label>
+          <label class="choice">
+            <input type="radio" name="action" value="beide">
+            <span class="choice-body">
+              <strong>Panel en Wings</strong>
+              <span>Alles op deze ene server. Handig als je met één server begint.</span>
+            </span>
+          </label>
+        </div>
+        <p class="notice" id="installed-notice" hidden></p>
+        <p class="field-error" data-error-for="action" role="alert"></p>
+      </section>
+
+      <!-- Stap: domein -->
+      <section data-step="domein" hidden>
+        <h2>Domein en beveiliging</h2>
+
+        <fieldset class="field">
+          <legend>Beveiligde verbinding (HTTPS)</legend>
+          <label class="radio"><input type="radio" name="https" value="letsencrypt" checked> <span>Automatisch met Let's Encrypt <span class="badge">aanbevolen · gratis</span></span></label>
+          <label class="radio" id="https-own"><input type="radio" name="https" value="eigen"> Ik gebruik een eigen certificaat</label>
+          <label class="radio"><input type="radio" name="https" value="geen"> Geen HTTPS</label>
+          <p class="hint" id="https-hint"></p>
+        </fieldset>
+
+        <div class="field" id="fqdn-field">
+          <label for="fqdn">Domeinnaam</label>
+          <input id="fqdn" data-key="FQDN" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="panel.jouwdomein.nl">
+          <p class="hint" id="fqdn-hint"></p>
+          <p class="field-error" data-error-for="FQDN" role="alert"></p>
+        </div>
+
+        <div class="field" id="email-field">
+          <label for="email">E-mailadres</label>
+          <input id="email" type="email" data-key="EMAIL" autocomplete="email" placeholder="jij@jouwdomein.nl">
+          <p class="hint" id="email-hint"></p>
+          <p class="field-error" data-error-for="EMAIL" role="alert"></p>
+        </div>
+
+        <div id="le-terms-field">
+          <label class="check"><input type="checkbox" id="le-terms"> <span>Ik ga akkoord met de <a href="https://letsencrypt.org/repository/" target="_blank" rel="noopener noreferrer">voorwaarden van Let's Encrypt</a>.</span></label>
+          <p class="field-error" data-error-for="le-terms" role="alert"></p>
+        </div>
+
+        <div class="dns" id="dns-field">
+          <div class="dns-head">
+            <button type="button" class="btn secondary small" id="btn-dns">Domein controleren</button>
+            <span class="hint" id="dns-hint">We kijken of je domein naar deze server wijst.</span>
+          </div>
+          <div class="dns-result" id="dns-result" hidden></div>
+          <label class="check" id="dns-override-field" hidden><input type="checkbox" id="dns-override"> Toch doorgaan. Ik weet zeker dat het domein goed staat (bijvoorbeeld net aangepast).</label>
+          <p class="field-error" data-error-for="dns" role="alert"></p>
+        </div>
+
+        <div class="field">
+          <label class="check"><input type="checkbox" id="firewall" data-key="FIREWALL" checked> <span>Firewall instellen <span class="badge">aanbevolen</span></span></label>
+          <p class="hint" id="firewall-hint"></p>
+        </div>
+      </section>
+
+      <!-- Stap: panel -->
+      <section data-step="panel" hidden>
+        <h2>Panel</h2>
+        <h3>Je beheerdersaccount</h3>
+        <p class="hint">Hiermee log je straks in op het panel.</p>
+        <div class="grid">
+          <div class="field">
+            <label for="admin-firstname">Voornaam</label>
+            <input id="admin-firstname" data-key="ADMIN_FIRSTNAME" autocomplete="given-name">
+            <p class="field-error" data-error-for="ADMIN_FIRSTNAME" role="alert"></p>
+          </div>
+          <div class="field">
+            <label for="admin-lastname">Achternaam</label>
+            <input id="admin-lastname" data-key="ADMIN_LASTNAME" autocomplete="family-name">
+            <p class="field-error" data-error-for="ADMIN_LASTNAME" role="alert"></p>
+          </div>
+        </div>
+        <div class="grid">
+          <div class="field">
+            <label for="admin-username">Gebruikersnaam</label>
+            <input id="admin-username" data-key="ADMIN_USERNAME" autocomplete="username" autocapitalize="off" spellcheck="false">
+            <p class="hint">Minimaal 3 tekens: letters, cijfers, punt, streepje of underscore.</p>
+            <p class="field-error" data-error-for="ADMIN_USERNAME" role="alert"></p>
+          </div>
+          <div class="field">
+            <label for="admin-email">E-mailadres</label>
+            <input id="admin-email" type="email" data-key="ADMIN_EMAIL" autocomplete="email">
+            <p class="hint">Leeg laten = hetzelfde als bij de vorige stap.</p>
+            <p class="field-error" data-error-for="ADMIN_EMAIL" role="alert"></p>
+          </div>
+        </div>
+        <div class="grid">
+          <div class="field">
+            <label for="admin-password">Wachtwoord</label>
+            <input id="admin-password" type="password" data-key="ADMIN_PASSWORD" autocomplete="new-password">
+            <p class="hint">Minimaal 8 tekens.</p>
+            <p class="field-error" data-error-for="ADMIN_PASSWORD" role="alert"></p>
+          </div>
+          <div class="field">
+            <label for="admin-password2">Herhaal wachtwoord</label>
+            <input id="admin-password2" type="password" autocomplete="new-password">
+            <p class="field-error" data-error-for="admin-password2" role="alert"></p>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="timezone">Tijdzone</label>
+          <select id="timezone" data-key="TIMEZONE"></select>
+          <p class="field-error" data-error-for="TIMEZONE" role="alert"></p>
+        </div>
+
+        <label class="check"><input type="checkbox" id="telemetry" data-key="TELEMETRY"> Anonieme gebruiksstatistieken delen met Pterodactyl</label>
+
+        <details class="advanced">
+          <summary>Geavanceerde instellingen</summary>
+          <div class="field">
+            <label for="panel-version">Panel-versie</label>
+            <select id="panel-version" data-key="PANEL_VERSION">
+              <option value="1" selected>Versie 1 (stabiel, aanbevolen)</option>
+              <option value="2">Versie 2 (experimenteel)</option>
+            </select>
+            <p class="notice warn" id="panel-v2-warning" hidden>Versie 2 is nog niet officieel uitgebracht. Gebruik dit alleen om te testen.</p>
+            <p class="field-error" data-error-for="PANEL_VERSION" role="alert"></p>
+          </div>
+          <div class="grid">
+            <div class="field">
+              <label for="db-name">Databasenaam</label>
+              <input id="db-name" data-key="DB_NAME" value="panel" autocapitalize="off" spellcheck="false">
+              <p class="field-error" data-error-for="DB_NAME" role="alert"></p>
+            </div>
+            <div class="field">
+              <label for="db-user">Databasegebruiker</label>
+              <input id="db-user" data-key="DB_USER" value="pterodactyl" autocapitalize="off" spellcheck="false">
+              <p class="field-error" data-error-for="DB_USER" role="alert"></p>
+            </div>
+          </div>
+          <div class="field">
+            <label for="db-password">Databasewachtwoord</label>
+            <input id="db-password" type="password" data-key="DB_PASSWORD" autocomplete="new-password" placeholder="Leeg laten voor een sterk, willekeurig wachtwoord">
+            <p class="field-error" data-error-for="DB_PASSWORD" role="alert"></p>
+          </div>
+        </details>
+      </section>
+
+      <!-- Stap: node -->
+      <section data-step="node" hidden>
+        <h2>Wings (node)</h2>
+        <p class="lead">Wings draait je gameservers in Docker. Na de installatie koppel je deze node aan je panel; dat kan ook hier in de browser.</p>
+
+        <label class="check"><input type="checkbox" id="dbhost" data-key="DBHOST"> Databases voor gameservers mogelijk maken</label>
+        <p class="hint">Gameservers kunnen dan een eigen MySQL-database krijgen. MariaDB wordt daarvoor op deze server geïnstalleerd.</p>
+
+        <div id="dbhost-fields" class="indent" hidden>
+          <div class="field">
+            <label for="dbhost-user">Gebruikersnaam voor de databasehost</label>
+            <input id="dbhost-user" data-key="DBHOST_USER" value="pterodactyluser" autocapitalize="off" spellcheck="false">
+            <p class="field-error" data-error-for="DBHOST_USER" role="alert"></p>
+          </div>
+          <div class="grid">
+            <div class="field">
+              <label for="dbhost-password">Wachtwoord</label>
+              <input id="dbhost-password" type="password" data-key="DBHOST_PASSWORD" autocomplete="new-password">
+              <p class="hint">Je vult dit straks ook in het panel in (Admin → Databases).</p>
+              <p class="field-error" data-error-for="DBHOST_PASSWORD" role="alert"></p>
+            </div>
+            <div class="field">
+              <label for="dbhost-password2">Herhaal wachtwoord</label>
+              <input id="dbhost-password2" type="password" autocomplete="new-password">
+              <p class="field-error" data-error-for="dbhost-password2" role="alert"></p>
+            </div>
+          </div>
+          <details class="advanced">
+            <summary>Toegang vanaf andere servers</summary>
+            <fieldset class="field">
+              <legend>Wie mag verbinding maken met de databases?</legend>
+              <label class="radio"><input type="radio" name="dbhost-access" value="lokaal" checked> <span>Alleen deze server <span class="badge">aanbevolen als het panel hier ook staat</span></span></label>
+              <label class="radio"><input type="radio" name="dbhost-access" value="panel"> Alleen mijn panel op een andere server</label>
+              <label class="radio"><input type="radio" name="dbhost-access" value="overal"> Iedereen (alleen met een sterk wachtwoord)</label>
+            </fieldset>
+            <div class="field" id="dbhost-allow-field" hidden>
+              <label for="dbhost-allow">IP-adres van je panel</label>
+              <input id="dbhost-allow" data-key="DBHOST_ALLOW" autocapitalize="off" spellcheck="false" placeholder="203.0.113.10">
+              <p class="field-error" data-error-for="DBHOST_ALLOW" role="alert"></p>
+            </div>
+            <label class="check" id="dbhost-firewall-field" hidden><input type="checkbox" id="dbhost-firewall" data-key="DBHOST_FIREWALL"> Poort 3306 (MySQL) openzetten in de firewall</label>
+          </details>
+        </div>
+      </section>
+
+      <!-- Stap: controle -->
+      <section data-step="controle" hidden>
+        <h2>Controleren en installeren</h2>
+        <p class="lead">Kijk of alles klopt. De installatie duurt meestal 5 tot 15 minuten.</p>
+        <dl class="summary" id="summary"></dl>
+        <div class="notice" id="check-status" hidden></div>
+        <ul class="error-list" id="check-errors" hidden></ul>
+      </section>
+
+      <!-- Stap: installatie -->
+      <section data-step="installatie" hidden>
+        <h2 id="install-title">Bezig met installeren…</h2>
+        <p class="lead" id="install-lead">Je kunt deze pagina sluiten en later opnieuw openen met dezelfde link; de installatie gaat gewoon door.</p>
+        <ol class="progress" id="progress"></ol>
+        <div id="result" hidden></div>
+
+        <div class="wings-config" id="wings-config" hidden>
+          <h3>Node koppelen aan je panel</h3>
+          <ol class="steps-list">
+            <li>Log in op je panel en ga naar <strong>Admin → Nodes → Create New</strong>.</li>
+            <li id="wings-config-fqdn">Vul bij <strong>FQDN</strong> het domein of IP-adres van deze server in.</li>
+            <li>Open daarna het tabblad <strong>Configuration</strong> van de node en kopieer de tekst.</li>
+            <li>Plak die tekst hieronder en klik op <strong>Wings starten</strong>.</li>
+          </ol>
+          <textarea id="wings-config-text" rows="8" spellcheck="false" placeholder="debug: false&#10;uuid: ...&#10;token_id: ...&#10;token: ..."></textarea>
+          <div class="row">
+            <button type="button" class="btn primary" id="btn-wings-config">Wings starten</button>
+          </div>
+          <div class="notice" id="wings-config-result" hidden></div>
+          <pre class="log small" id="wings-config-log" hidden></pre>
+        </div>
+
+        <details class="log-details" id="log-details">
+          <summary>Technische details</summary>
+          <pre class="log" id="log" tabindex="0"></pre>
+        </details>
+
+        <div class="close-row" id="close-row" hidden>
+          <p class="hint" id="close-hint"></p>
+          <button type="button" class="btn secondary" id="btn-close">Webinstaller afsluiten</button>
+        </div>
+      </section>
+
+      <div class="actions" id="nav">
+        <button type="button" class="btn secondary" id="btn-back">Vorige</button>
+        <button type="button" class="btn primary" id="btn-next">Volgende</button>
+      </div>
+    </div>
+
+    <div class="card" id="message" hidden>
+      <h1 id="message-title"></h1>
+      <p class="lead" id="message-text"></p>
+    </div>
+
+    <p class="loading" id="loading">Laden…</p>
+  </main>
+
+  <footer class="footer">
+    <span>Etheron · Pterodactyl-installer <span id="version"></span></span>
+    <a href="https://support.etheron.nl" target="_blank" rel="noopener noreferrer">Hulp nodig?</a>
+  </footer>
+</body>
+</html>

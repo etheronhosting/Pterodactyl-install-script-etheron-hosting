@@ -176,7 +176,7 @@ pass_if "geldige waarde telt niet" test "$CONFIG_ERRORS" -eq 2
 # ------------- regeleinden (CRLF) ------------- #
 
 # Een checkout op Windows kan CRLF opleveren; dat breekt scripts en configs op Linux.
-for project_file in "$ETHERON_DIR"/install.sh "$ETHERON_DIR"/{lib,ui,installers,configs,voorbeelden}/*; do
+for project_file in "$ETHERON_DIR"/install.sh "$ETHERON_DIR"/{lib,ui,installers,configs,voorbeelden,webui,webui/static}/*.*; do
   fail_if "CRLF in ${project_file#"$ETHERON_DIR"/}" grep -q $'\r' "$project_file"
 done
 

@@ -655,13 +655,19 @@ ssh_ports() {
 # toegestaan en pas daarna wordt de firewall ingeschakeld, zodat een lopende
 # SSH-sessie niet wordt afgesloten.
 setup_firewall() {
-  local port
+  local port ports=("$@")
   output "Firewall ($(firewall_name)) instellen..."
+
+  # Via de webinstaller moet de browser de wizard tijdens de installatie blijven
+  # bereiken; de webinstaller haalt deze regel weg als hij stopt.
+  if [ -n "${ETHERON_WEB_PORT:-}" ]; then
+    ports+=("$ETHERON_WEB_PORT")
+  fi
 
   case "$OS" in
   ubuntu | debian)
     ensure_command ufw ufw ufw
-    for port in "$@"; do
+    for port in "${ports[@]}"; do
       ufw allow "$port/tcp" >/dev/null
       output "Poort $port/tcp toegestaan"
     done
@@ -670,7 +676,7 @@ setup_firewall() {
   rocky | almalinux)
     ensure_command firewall-cmd firewalld firewalld
     systemctl enable --now firewalld >/dev/null 2>&1
-    for port in "$@"; do
+    for port in "${ports[@]}"; do
       firewall-cmd --zone=public --permanent --add-port="$port/tcp" >/dev/null
       output "Poort $port/tcp toegestaan"
     done
@@ -679,6 +685,7 @@ setup_firewall() {
   esac
 
   success "Firewall ingeschakeld."
+  return 0
 }
 
 # Staat één TCP-poort alleen toe vanaf één IP-adres.

@@ -37,6 +37,7 @@ usage() {
 Gebruik: install.sh [actie] [opties]
 
 Acties (zonder actie verschijnt een menu):
+  web            Installeren via de webbrowser (webinstaller)
   panel          Pterodactyl Panel installeren
   wings          Pterodactyl Wings installeren
   beide          Panel en Wings op dezelfde server installeren
@@ -95,6 +96,7 @@ CLEANUP_FILE=""
 parse_args() {
   while [ $# -gt 0 ]; do
     case "$1" in
+    web | webui | browser) ACTION="web" ;;
     panel | wings) ACTION="$1" ;;
     beide | both) ACTION="beide" ;;
     verwijderen | uninstall) ACTION="verwijderen" ;;
@@ -132,8 +134,9 @@ choose_action() {
     "Wings installeren"
     "Panel en Wings installeren op deze server"
     "Panel en/of Wings verwijderen"
+    "Installeren via de webbrowser"
   )
-  local actions=(panel wings beide verwijderen)
+  local actions=(panel wings beide verwijderen web)
 
   while true; do
     output "Wat wil je doen?"
@@ -205,11 +208,11 @@ main() {
   fi
 
   [ -n "$ACTION" ] || choose_action
-  if [ "$ACTION" == "verwijderen" ]; then
-    bash "$ETHERON_DIR/installers/uninstall.sh"
-  else
-    run_interactive
-  fi
+  case "$ACTION" in
+  verwijderen) bash "$ETHERON_DIR/installers/uninstall.sh" ;;
+  web) bash "$ETHERON_DIR/webui/webinstaller.sh" start ;;
+  *) run_interactive ;;
+  esac
 }
 
 parse_args "$@"
@@ -219,8 +222,8 @@ detect_os
 if [ -n "$CONFIG_FILE" ]; then
   case "$ACTION" in
   panel | wings | beide) ;;
-  verwijderen)
-    error "Verwijderen kan alleen interactief (zonder --config)."
+  verwijderen | web)
+    error "--config werkt alleen met panel, wings of beide."
     exit 1
     ;;
   *)
@@ -231,6 +234,12 @@ if [ -n "$CONFIG_FILE" ]; then
   [[ "$CONFIG_FILE" == /* ]] || CONFIG_FILE="$PWD/$CONFIG_FILE"
   load_config "$CONFIG_FILE" || exit 1
   export UNATTENDED=true
+elif [ "$ACTION" == "web" ]; then
+  # De webinstaller stelt geen vragen in de terminal en logt de installatie zelf;
+  # buiten het logbestand houden, want de link bevat een toegangstoken.
+  welcome
+  bash "$ETHERON_DIR/webui/webinstaller.sh" start
+  exit 0
 elif [ ! -t 0 ]; then
   error "Geen terminal gevonden. Start de installer met 'bash <(curl -fsSL ...)' in plaats van 'curl ... | bash', of gebruik --config."
   exit 1
