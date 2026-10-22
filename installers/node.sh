@@ -216,11 +216,32 @@ wings_config_value() {
   echo "${value:-$2}"
 }
 
+# Legt uit waarom MariaDB niet bereikbaar is via de Docker-gateway.
+# Gebruik: explain_dbhost_failure gateway foutmelding-van-de-client
+explain_dbhost_failure() {
+  local listening
+  output "Melding van MariaDB: ${2:-geen}"
+
+  if ! ip -4 -o addr show 2>/dev/null | grep -qF " $1/"; then
+    output "Het Docker-netwerk van Wings ($1) bestaat (nog) niet. Wings maakt het aan bij het opstarten;"
+    output "kijk met 'journalctl -u wings -n 30' of Wings goed start, en probeer het daarna opnieuw."
+    return 0
+  fi
+
+  listening=$(ss -ltn 2>/dev/null | awk '$4 ~ /:3306$/ { print $4 }' | tr '\n' ' ')
+  output "MariaDB luistert op: ${listening:-niets}"
+  if [[ "$listening" != *0.0.0.0:3306* && "$listening" != *"[::]:3306"* && "$listening" != *"*:3306"* ]]; then
+    output "MariaDB luistert niet op alle adressen. Controleer bind-address in de MariaDB-configuratie"
+    output "(grep -r bind-address /etc/mysql /etc/my.cnf /etc/my.cnf.d 2>/dev/null)."
+  fi
+  return 0
+}
+
 # Zet een databasehost klaar en registreert hem in het panel op deze server.
 # Gameservers draaien in Docker en bereiken MariaDB via de gateway van het
 # Docker-netwerk van Wings (standaard 172.18.0.1), niet via 127.0.0.1.
 setup_dbhost() {
-  local gateway subnet password conf_dir="/etc/mysql/mariadb.conf.d" exists password_file result reachable=false
+  local gateway subnet password conf_dir="/etc/mysql/mariadb.conf.d" exists password_file result reachable=false client_error=""
 
   output "Databases voor gameservers instellen..."
   check_database_connection
@@ -262,15 +283,17 @@ setup_dbhost() {
 
   # Zelfde controle als het panel doet voordat het een databasehost opslaat. Wings
   # maakt zijn Docker-netwerk bij het opstarten, dus geef het even de tijd.
-  for _ in {1..10}; do
-    if MYSQL_PWD="$password" mariadb -h "$gateway" -P 3306 -u "$DBHOST_USER" -e "SELECT 1;" >/dev/null 2>&1; then
+  # --skip-ssl: de client van MariaDB 11.4+ eist anders TLS, wat hier niet nodig is.
+  for _ in {1..15}; do
+    if client_error=$(MYSQL_PWD="$password" mariadb --skip-ssl -h "$gateway" -P 3306 -u "$DBHOST_USER" -e "SELECT 1;" 2>&1 >/dev/null); then
       reachable=true
       break
     fi
     sleep 2
   done
-  if [ "${reachable:-false}" != true ]; then
+  if [ "$reachable" != true ]; then
     error "MariaDB is niet bereikbaar via $gateway:3306. De databasehost is niet in het panel gezet."
+    explain_dbhost_failure "$gateway" "$client_error"
     exit 1
   fi
 
@@ -312,6 +335,27 @@ PHP
   fi
   DBHOST_DONE="$gateway:3306"
   success "Databases voor gameservers ingesteld."
+}
+
+# Zoekt de node die bij de bestaande Wings-configuratie hoort (voor het opnieuw
+# instellen van alleen de databases). Zet NODE_ID en NODE_NAME.
+find_linked_node() {
+  local uuid database row
+
+  uuid=$(awk '$1 == "uuid:" { print $2; exit }' "$WINGS_CONFIG" | tr -d "\"'")
+  database=$(panel_database)
+  if [[ ! "$uuid" =~ ^[0-9a-f-]{36}$ ]] || ! valid_database_identifier "$database"; then
+    error "Kon de node van deze Wings niet vinden in het panel."
+    exit 1
+  fi
+  check_database_connection
+  row=$(mariadb -u root -N -e "SELECT id, name FROM \`$database\`.nodes WHERE uuid = '$uuid';")
+  if [ -z "$row" ]; then
+    error "De node van deze Wings ($uuid) staat niet in het panel op deze server."
+    exit 1
+  fi
+  NODE_ID=$(cut -f1 <<<"$row")
+  NODE_NAME=$(cut -f2 <<<"$row")
 }
 
 # ---------------- Panel op een andere server ---------------- #
@@ -428,6 +472,19 @@ perform_link() {
     exit 1
   fi
   if [ -s "$WINGS_CONFIG" ]; then
+    # Al gekoppeld, maar mislukte het instellen van de databases? Dan alleen dat opnieuw.
+    if [ "$NODE_DBHOST" == true ] && [ -z "$PANEL_URL" ] && [ -f "$PANEL_DIR/artisan" ]; then
+      output "Wings is al gekoppeld; alleen de databases voor gameservers worden (opnieuw) ingesteld."
+      find_linked_node
+      if ! systemctl is-active --quiet wings; then
+        start_wings
+      fi
+      setup_dbhost
+      print_brake 70
+      output "Databases: databasehost $DBHOST_DONE (gebruiker $DBHOST_USER) staat in het panel bij node $NODE_NAME"
+      print_brake 70
+      return 0
+    fi
     error "Wings is al gekoppeld ($WINGS_CONFIG bestaat). Verwijder dat bestand als je opnieuw wilt koppelen."
     exit 1
   fi

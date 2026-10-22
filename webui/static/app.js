@@ -886,7 +886,8 @@ async function linkNode() {
     if (data.lines && data.lines.length) appendLog(['', '--- Node koppelen ---', ...data.lines]);
     if (data.ok) {
       notice.className = 'notice ok';
-      notice.textContent = 'Je node is gekoppeld en Wings draait. In het panel staat hij onder Admin → Nodes; het hartje wordt binnen een minuut groen.';
+      notice.textContent = 'Je node is gekoppeld en Wings draait. In het panel staat hij onder Admin → Nodes; het hartje wordt binnen een minuut groen.' +
+        (state.flags.DBHOST_AUTO ? ' De databases voor gameservers staan onder Admin → Databases.' : '');
       notice.hidden = false;
       $('#node-form').hidden = true;
       $('#manual-config').hidden = true;
@@ -910,6 +911,15 @@ async function linkNode() {
       log.textContent = data.lines.slice(-25).join('\n');
       log.hidden = false;
     }
+    // Node wel gekoppeld, databases niet: opnieuw klikken stelt alleen de databases in.
+    const lines = data.lines || [];
+    if (state.flags.DBHOST_AUTO && lines.some((line) => /Wings draait|Wings is al gekoppeld/.test(line))) {
+      state.nodeLinked = true;
+      notice.className = 'notice warn';
+      notice.textContent = 'De node is gekoppeld en Wings draait, maar de databases voor gameservers zijn nog niet ingesteld. Los het probleem hieronder op en klik dan op "Databases opnieuw instellen".';
+      notice.hidden = false;
+      $('#manual-config').hidden = true;
+    }
   } catch (error) {
     if (error instanceof Forbidden) return;
     notice.className = 'notice err';
@@ -917,7 +927,7 @@ async function linkNode() {
     notice.hidden = false;
   } finally {
     button.disabled = false;
-    button.textContent = 'Node aanmaken en Wings starten';
+    button.textContent = state.nodeLinked ? 'Databases opnieuw instellen' : 'Node aanmaken en Wings starten';
   }
 }
 
