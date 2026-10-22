@@ -237,11 +237,25 @@ explain_dbhost_failure() {
   return 0
 }
 
+# Maakt de databasehost-gebruiker voor één host aan, of zet een nieuw wachtwoord
+# als hij al bestaat. Gebruik: set_dbhost_user host wachtwoord
+set_dbhost_user() {
+  local exists
+  exists=$(mariadb -u root -N -e "SELECT COUNT(*) FROM mysql.user WHERE user = '$DBHOST_USER' AND host = '$1';")
+  if [ "$exists" != "0" ]; then
+    mariadb -u root -e "ALTER USER '$DBHOST_USER'@'$1' IDENTIFIED BY '$2';"
+  else
+    mariadb -u root -e "CREATE USER '$DBHOST_USER'@'$1' IDENTIFIED BY '$2';"
+  fi
+  mariadb -u root -e "GRANT ALL PRIVILEGES ON *.* TO '$DBHOST_USER'@'$1' WITH GRANT OPTION; FLUSH PRIVILEGES;"
+}
+
 # Zet een databasehost klaar en registreert hem in het panel op deze server.
 # Gameservers draaien in Docker en bereiken MariaDB via de gateway van het
 # Docker-netwerk van Wings (standaard 172.18.0.1), niet via 127.0.0.1.
 setup_dbhost() {
-  local gateway subnet password conf_dir="/etc/mysql/mariadb.conf.d" exists password_file result reachable=false client_error=""
+  local gateway subnet password conf_dir="/etc/mysql/mariadb.conf.d" password_file result reachable=false client_error="" allowed seen
+  local not_allowed_re="Host '([0-9a-fA-F.:]+)' is not allowed"
 
   output "Databases voor gameservers instellen..."
   check_database_connection
@@ -273,13 +287,8 @@ setup_dbhost() {
 
   # Een nieuw, willekeurig wachtwoord; ook als de gebruiker al bestond.
   password=$(gen_passwd 32)
-  exists=$(mariadb -u root -N -e "SELECT COUNT(*) FROM mysql.user WHERE user = '$DBHOST_USER' AND host = '$gateway';")
-  if [ "$exists" != "0" ]; then
-    mariadb -u root -e "ALTER USER '$DBHOST_USER'@'$gateway' IDENTIFIED BY '$password';"
-  else
-    mariadb -u root -e "CREATE USER '$DBHOST_USER'@'$gateway' IDENTIFIED BY '$password';"
-  fi
-  mariadb -u root -e "GRANT ALL PRIVILEGES ON *.* TO '$DBHOST_USER'@'$gateway' WITH GRANT OPTION; FLUSH PRIVILEGES;"
+  set_dbhost_user "$gateway" "$password"
+  allowed=" $gateway "
 
   # Zelfde controle als het panel doet voordat het een databasehost opslaat. Wings
   # maakt zijn Docker-netwerk bij het opstarten, dus geef het even de tijd.
@@ -288,6 +297,18 @@ setup_dbhost() {
     if client_error=$(MYSQL_PWD="$password" mariadb --skip-ssl -h "$gateway" -P 3306 -u "$DBHOST_USER" -e "SELECT 1;" 2>&1 >/dev/null); then
       reachable=true
       break
+    fi
+    # Docker zet het afzenderadres van verkeer van de server naar zichzelf vaak om
+    # (NAT), meestal naar het publieke IP. MariaDB noemt dan het adres dat hij ziet;
+    # het panel verbindt op dezelfde manier, dus sta precies dat adres ook toe.
+    # (Eerst bewaren: is_ip_address overschrijft BASH_REMATCH.)
+    seen=""
+    [[ "$client_error" =~ $not_allowed_re ]] && seen="${BASH_REMATCH[1]}"
+    if [ -n "$seen" ] && is_ip_address "$seen" && [[ "$allowed" != *" $seen "* ]]; then
+      output "MariaDB ziet deze server als $seen; dat adres krijgt ook toegang."
+      set_dbhost_user "$seen" "$password"
+      allowed+="$seen "
+      continue
     fi
     sleep 2
   done
