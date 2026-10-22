@@ -75,7 +75,7 @@ CONFIG_KEYS=(
   DB_NAME DB_USER DB_PASSWORD
   ADMIN_EMAIL ADMIN_USERNAME ADMIN_FIRSTNAME ADMIN_LASTNAME ADMIN_PASSWORD
   WINGS_RELEASE DBHOST DBHOST_USER DBHOST_PASSWORD DBHOST_ALLOW DBHOST_FIREWALL
-  NODE_NAME NODE_LOCATION NODE_PORTS NODE_FQDN PANEL_URL PANEL_API_KEY
+  NODE_NAME NODE_LOCATION NODE_PORTS NODE_FQDN PANEL_URL PANEL_API_KEY NODE_DBHOST
 )
 
 # Aantal fouten gevonden door check_setting.
@@ -462,6 +462,11 @@ valid_database_identifier() {
 # geëscaped moeten worden.
 valid_db_password() {
   [[ -n "$1" && ${#1} -le 128 && ! "$1" =~ [[:space:][:cntrl:]] && "$1" != *[\'\"\\\$\`\#]* ]]
+}
+
+# Het panel staat voor een databasehost maximaal 32 tekens toe.
+valid_dbhost_user() {
+  valid_database_identifier "$1" && [ ${#1} -le 32 ]
 }
 
 valid_dbhost_allow() {
@@ -866,6 +871,7 @@ describe_setting() {
   NODE_FQDN) echo "Node: adres" ;;
   PANEL_URL) echo "Panel-adres" ;;
   PANEL_API_KEY) echo "API-sleutel van het panel" ;;
+  NODE_DBHOST) echo "Node: databases automatisch" ;;
   *) echo "$1" ;;
   esac
 }

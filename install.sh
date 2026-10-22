@@ -176,7 +176,8 @@ run_installers() {
   node) installers=(node) ;;
   esac
   # Staan er NODE_*- of PANEL_*-instellingen in het bestand, koppel Wings dan meteen aan het panel.
-  if [[ "$ACTION" == wings || "$ACTION" == beide ]] && [ -n "${NODE_NAME:-}${NODE_LOCATION:-}${NODE_PORTS:-}${PANEL_URL:-}" ]; then
+  if [[ "$ACTION" == wings || "$ACTION" == beide ]] &&
+    { [ -n "${NODE_NAME:-}${NODE_LOCATION:-}${NODE_PORTS:-}${PANEL_URL:-}" ] || [ "${NODE_DBHOST:-}" == true ]; }; then
     installers+=(node)
   fi
 

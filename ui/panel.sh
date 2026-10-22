@@ -141,6 +141,7 @@ ask_fqdn() {
   if [ -n "$nip" ]; then
     output "Geen domein? Druk dan op Enter voor het gratis adres $nip;"
     output "dat wijst automatisch naar deze server en werkt met Let's Encrypt."
+    output "Een eigen naam ervoor kan ook, bijvoorbeeld mijnpanel-$nip."
   fi
   while true; do
     echo -n "* Adres van het panel${nip:+ [$nip]}: "

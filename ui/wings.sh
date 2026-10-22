@@ -57,8 +57,8 @@ ask_dbhost() {
 
   while true; do
     required_input DBHOST_USER "Gebruikersnaam [pterodactyluser]: " "" "pterodactyluser"
-    valid_database_identifier "$DBHOST_USER" && break
-    error "Alleen letters, cijfers en _ (maximaal 64 tekens)."
+    valid_dbhost_user "$DBHOST_USER" && break
+    error "Alleen letters, cijfers en _ (maximaal 32 tekens)."
   done
 
   while true; do
@@ -107,7 +107,8 @@ ask_letsencrypt() {
 
   output "Let's Encrypt voor Wings werkt alleen met een domeinnaam (bijv. node1.voorbeeld.nl), niet met een IP-adres."
   if [ -n "$nip" ]; then
-    output "Geen domein? Het gratis adres $nip wijst automatisch naar deze server."
+    output "Geen domein? Het gratis adres $nip wijst automatisch naar deze server;"
+    output "een eigen naam ervoor kan ook, bijvoorbeeld node1-$nip."
   fi
   if [ "$FIREWALL" == false ]; then
     output "Let's Encrypt heeft poort 80 nodig. Zorg zelf dat die open staat."

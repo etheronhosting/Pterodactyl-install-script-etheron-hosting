@@ -114,7 +114,20 @@ const isIp = (value) => IPV4_RE.test(value) || value.includes(':');
 const fqdnValue = () => val('fqdn').replace(/\.$/, '');
 const steps = () => STEPS[state.action || 'beide'];
 const addressChoice = () => radio('address');
-const nipName = () => (state.info && state.info.nipName) || '';
+// Eigen naam voor een nip.io-adres: kleine letters, cijfers en losse streepjes.
+const NIP_LABEL_RE = /^(?=.{1,40}$)[a-z0-9]+(-[a-z0-9]+)*$/;
+const nipLabel = () => val('nip-label').toLowerCase();
+
+// nip.io-adres van deze server, met de eigen naam ervoor als die is ingevuld.
+function nipName() {
+  const base = (state.info && state.info.nipName) || '';
+  const label = nipLabel();
+  return base && label && NIP_LABEL_RE.test(label) ? `${label}-${base}` : base;
+}
+
+// Databases automatisch instellen kan alleen als het panel op deze server staat.
+const panelHere = () => hasPanel() || Boolean(state.info && state.info.panelInstalled);
+const dbhostMode = () => radio('dbhost-mode');
 
 // Het adres van het panel of de node volgens de gekozen manier van bereikbaar zijn.
 function currentFqdn() {
@@ -228,6 +241,7 @@ function updateForm() {
   }
   const choice = addressChoice();
   const address = state.info ? state.info.address : 'deze server';
+  $('#nip-field').hidden = choice !== 'nipio';
   $('#nip-name').textContent = nipName();
   $('#ip-name').textContent = address;
   $('#address-legend').textContent = panel ? 'Hoe moet je panel bereikbaar zijn?' : 'Hoe moet deze node bereikbaar zijn?';
@@ -277,8 +291,22 @@ function updateForm() {
   $('#panel-v2-warning').hidden = $('#panel-version').value !== '2';
   $('#admin-email').placeholder = val('email');
 
+  const local = panelHere();
+  $('#dbhost-mode-auto').hidden = !local;
+  if (!local && dbhostMode() === 'auto') {
+    $('input[name="dbhost-mode"][value="none"]').checked = true;
+  }
+  const mode = dbhostMode();
+  const modeHints = {
+    auto: 'We maken een databasegebruiker aan en zetten hem bij het koppelen van de node meteen in je panel. Je hoeft niets in te vullen.',
+    manual: 'Je kiest zelf een gebruikersnaam en wachtwoord en voegt de databasehost daarna zelf toe in het panel (Admin → Databases).',
+    none: '',
+  };
+  $('#dbhost-mode-hint').textContent = [modeHints[mode], local ? '' : 'Automatisch instellen kan alleen als het panel op deze server staat.']
+    .filter(Boolean).join(' ');
+
   const access = radio('dbhost-access');
-  $('#dbhost-fields').hidden = !checked('dbhost');
+  $('#dbhost-fields').hidden = mode !== 'manual';
   $('#dbhost-allow-field').hidden = access !== 'panel';
   $('#dbhost-firewall-field').hidden = access === 'lokaal' || !checked('firewall');
 }
@@ -338,6 +366,9 @@ async function validateDomain() {
       ok = setError('FQDN', "Voor HTTPS heb je een domeinnaam nodig. Geen domein? Kies hierboven het gratis nip.io-adres of 'Alleen het IP-adres'.");
     }
   }
+  if (addressChoice() === 'nipio' && nipLabel() && !NIP_LABEL_RE.test(nipLabel())) {
+    ok = setError('nip-label', 'Alleen kleine letters, cijfers en losse streepjes (maximaal 40 tekens).');
+  }
   if (!$('#email-field').hidden && !EMAIL_RE.test(val('email'))) {
     ok = setError('EMAIL', 'Vul een geldig e-mailadres in.');
   }
@@ -380,9 +411,9 @@ function validatePanel() {
 }
 
 function validateNode() {
-  if (!checked('dbhost')) return true;
+  if (dbhostMode() !== 'manual') return true;
   let ok = true;
-  if (!IDENTIFIER_RE.test(val('dbhost-user'))) ok = setError('DBHOST_USER', 'Alleen letters, cijfers en _ (maximaal 64 tekens).');
+  if (!/^[a-zA-Z0-9_]{1,32}$/.test(val('dbhost-user'))) ok = setError('DBHOST_USER', 'Alleen letters, cijfers en _ (maximaal 32 tekens).');
   const password = raw('dbhost-password');
   if (!password) ok = setError('DBHOST_PASSWORD', 'Kies een wachtwoord.');
   else if (DB_PASSWORD_BAD.test(password) || password.length > 128) ok = setError('DBHOST_PASSWORD', DB_PASSWORD_MESSAGE);
@@ -439,7 +470,8 @@ function collectSettings() {
   }
 
   if (hasWings()) {
-    settings.DBHOST = checked('dbhost');
+    // 'Automatisch' gebeurt bij het koppelen van de node (installers/node.sh).
+    settings.DBHOST = dbhostMode() === 'manual';
     if (settings.DBHOST) {
       const access = radio('dbhost-access');
       settings.DBHOST_USER = val('dbhost-user');
@@ -475,7 +507,7 @@ function renderSummary() {
   }
   if (hasWings()) {
     group('Wings');
-    row('Databases voor gameservers', settings.DBHOST ? 'Ja' : 'Nee');
+    row('Databases voor gameservers', { auto: 'Automatisch instellen', manual: 'Zelf instellen', none: 'Niet nodig' }[dbhostMode()]);
     if (settings.DBHOST) {
       const access = radio('dbhost-access');
       row('Toegang tot databases', access === 'panel' ? `${ACCESS_LABELS.panel} (${settings.DBHOST_ALLOW})` : ACCESS_LABELS[access]);
@@ -658,9 +690,16 @@ async function startInstall() {
 
   try {
     const settings = collectSettings();
-    const data = await api('/api/install', { action: state.action, settings });
+    // Extra keuzes die de server alleen onthoudt (bijv. na herladen), geen installatie-instellingen.
+    const flags = { DBHOST_AUTO: hasWings() && dbhostMode() === 'auto' };
+    const data = await api('/api/install', { action: state.action, settings, flags });
     if (data.ok) {
-      enterInstall(state.action, { LETSENCRYPT: settings.LETSENCRYPT, ASSUME_SSL: settings.ASSUME_SSL, DBHOST: settings.DBHOST });
+      enterInstall(state.action, {
+        LETSENCRYPT: settings.LETSENCRYPT,
+        ASSUME_SSL: settings.ASSUME_SSL,
+        DBHOST: settings.DBHOST,
+        DBHOST_AUTO: flags.DBHOST_AUTO,
+      });
       return;
     }
     if (data.httpStatus === 409) {
@@ -790,6 +829,8 @@ function setupNodeForm(host, https) {
     name.value = hostname.replace(/[^A-Za-z0-9_ .-]/g, '').slice(0, 100) || 'node1';
   }
   $('#node-address').textContent = `Wings wordt bereikbaar op ${https ? 'https' : 'http'}://${host}:8080.`;
+  $('#node-dbhost-note').hidden = !state.flags.DBHOST_AUTO;
+  $('#manual-dbhost-note').hidden = !state.flags.DBHOST_AUTO;
 }
 
 function validPortRange(value) {
@@ -833,6 +874,7 @@ async function linkNode() {
     settings.PANEL_URL = val('panel-url');
     settings.PANEL_API_KEY = val('panel-api-key');
   }
+  if (state.flags.DBHOST_AUTO) settings.NODE_DBHOST = true;
 
   button.disabled = true;
   button.textContent = 'Bezig met koppelen… (ongeveer een halve minuut)';
@@ -944,16 +986,22 @@ function bindEvents() {
   $$('input[name="action"]').forEach((input) => input.addEventListener('change', () => {
     state.action = input.value;
     $('[data-error-for="action"]').textContent = '';
+    // Databases: automatisch als dat kan (panel op deze server), anders niet nodig.
+    $(`input[name="dbhost-mode"][value="${panelHere() ? 'auto' : 'none'}"]`).checked = true;
     renderStepper();
     updateForm();
   }));
-  $$('input[name="https"], input[name="dbhost-access"]').forEach((input) => input.addEventListener('change', updateForm));
+  $$('input[name="https"], input[name="dbhost-access"], input[name="dbhost-mode"]').forEach((input) => input.addEventListener('change', updateForm));
+  $('#nip-label').addEventListener('input', () => {
+    resetDns();
+    updateForm();
+  });
   $$('input[name="address"]').forEach((input) => input.addEventListener('change', () => {
     resetDns();
     updateForm();
   }));
-  ['firewall', 'dbhost', 'panel-version', 'email'].forEach((id) => $('#' + id).addEventListener('input', updateForm));
-  ['firewall', 'dbhost', 'panel-version'].forEach((id) => $('#' + id).addEventListener('change', updateForm));
+  ['firewall', 'panel-version', 'email'].forEach((id) => $('#' + id).addEventListener('input', updateForm));
+  ['firewall', 'panel-version'].forEach((id) => $('#' + id).addEventListener('change', updateForm));
   $('#fqdn').addEventListener('input', resetDns);
   $('#btn-dns').addEventListener('click', runDns);
   $('#btn-next').addEventListener('click', onNext);

@@ -29,6 +29,10 @@ set -e -o pipefail
 #  - Panel op een andere server: via de Application API (PANEL_URL en
 #    PANEL_API_KEY met Read & Write op Locations, Nodes en Allocations).
 #
+# Met NODE_DBHOST=true wordt ook een databasehost voor gameservers ingesteld en
+# in het panel gezet. Dat kan alleen als het panel op deze server staat: de
+# API van Pterodactyl kent geen databasehosts.
+#
 # Met --controleren worden alleen de instellingen gecontroleerd.
 # Gebruik: installers/node.sh <instellingenbestand> [--controleren]
 
@@ -50,6 +54,8 @@ NODE_PORTS="${NODE_PORTS:-25565-25600}"
 NODE_FQDN="${NODE_FQDN%.}"
 PANEL_URL="${PANEL_URL%/}"
 PANEL_API_KEY="${PANEL_API_KEY:-}"
+NODE_DBHOST="${NODE_DBHOST:-false}"
+DBHOST_USER="${DBHOST_USER:-pterodactyluser}"
 
 WINGS_CONFIG="/etc/pterodactyl/config.yml"
 DAEMON_BASE="/var/lib/pterodactyl/volumes"
@@ -69,6 +75,11 @@ validate_settings() {
   if [ -n "$PANEL_URL$PANEL_API_KEY" ]; then
     check_setting PANEL_URL valid_panel_url "adres van het panel, zoals https://panel.voorbeeld.nl"
     check_setting PANEL_API_KEY valid_api_key "Application API-sleutel uit het panel, begint met ptla_"
+  fi
+  check_setting NODE_DBHOST valid_bool "true of false"
+  if [ "$NODE_DBHOST" == true ]; then
+    # Het panel staat maximaal 32 tekens toe voor de gebruikersnaam van een databasehost.
+    check_setting DBHOST_USER valid_dbhost_user "letters, cijfers en _, maximaal 32 tekens"
   fi
 
   if [ "$CONFIG_ERRORS" -gt 0 ]; then
@@ -195,6 +206,114 @@ link_local() {
   NODE_ID="$node_id"
 }
 
+# ---------------- Databases voor gameservers ---------------- #
+
+# Waarde uit de Wings-configuratie, met een standaardwaarde als hij er niet in staat.
+# Gebruik: wings_config_value sleutel standaard
+wings_config_value() {
+  local value
+  value=$(awk -v key="$1:" '$1 == key { print $2; exit }' "$WINGS_CONFIG" 2>/dev/null) || true
+  echo "${value:-$2}"
+}
+
+# Zet een databasehost klaar en registreert hem in het panel op deze server.
+# Gameservers draaien in Docker en bereiken MariaDB via de gateway van het
+# Docker-netwerk van Wings (standaard 172.18.0.1), niet via 127.0.0.1.
+setup_dbhost() {
+  local gateway subnet password conf_dir="/etc/mysql/mariadb.conf.d" exists password_file result reachable=false
+
+  output "Databases voor gameservers instellen..."
+  check_database_connection
+
+  gateway=$(wings_config_value gateway 172.18.0.1)
+  subnet=$(wings_config_value subnet 172.18.0.0/16)
+  if ! is_ip_address "$gateway" || [[ ! "$subnet" =~ ^[0-9.]+/[0-9]{1,2}$ ]]; then
+    error "Onverwacht Docker-netwerk in de Wings-configuratie ($gateway, $subnet)."
+    exit 1
+  fi
+
+  # MariaDB moet ook via de Docker-gateway bereikbaar zijn.
+  case "$OS" in
+  rocky | almalinux) conf_dir="/etc/my.cnf.d" ;;
+  esac
+  mkdir -p "$conf_dir"
+  printf '# Geplaatst door de Etheron-installer (databases voor gameservers)\n[mysqld]\nbind-address=0.0.0.0\n' \
+    >"$conf_dir/99-etheron-dbhost.cnf"
+  systemctl restart mariadb
+
+  # Alleen gameservers (Docker-netwerk) mogen poort 3306 bereiken; van buiten blijft hij dicht.
+  if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -q "Status: active"; then
+    firewall_allow_from "$subnet" 3306
+  elif command -v firewall-cmd >/dev/null 2>&1 && firewall-cmd --state >/dev/null 2>&1; then
+    firewall_allow_from "$subnet" 3306
+  else
+    warning "Er is geen firewall actief: MariaDB is nu ook van buitenaf bereikbaar op poort 3306."
+  fi
+
+  # Een nieuw, willekeurig wachtwoord; ook als de gebruiker al bestond.
+  password=$(gen_passwd 32)
+  exists=$(mariadb -u root -N -e "SELECT COUNT(*) FROM mysql.user WHERE user = '$DBHOST_USER' AND host = '$gateway';")
+  if [ "$exists" != "0" ]; then
+    mariadb -u root -e "ALTER USER '$DBHOST_USER'@'$gateway' IDENTIFIED BY '$password';"
+  else
+    mariadb -u root -e "CREATE USER '$DBHOST_USER'@'$gateway' IDENTIFIED BY '$password';"
+  fi
+  mariadb -u root -e "GRANT ALL PRIVILEGES ON *.* TO '$DBHOST_USER'@'$gateway' WITH GRANT OPTION; FLUSH PRIVILEGES;"
+
+  # Zelfde controle als het panel doet voordat het een databasehost opslaat. Wings
+  # maakt zijn Docker-netwerk bij het opstarten, dus geef het even de tijd.
+  for _ in {1..10}; do
+    if MYSQL_PWD="$password" mariadb -h "$gateway" -P 3306 -u "$DBHOST_USER" -e "SELECT 1;" >/dev/null 2>&1; then
+      reachable=true
+      break
+    fi
+    sleep 2
+  done
+  if [ "${reachable:-false}" != true ]; then
+    error "MariaDB is niet bereikbaar via $gateway:3306. De databasehost is niet in het panel gezet."
+    exit 1
+  fi
+
+  output "Databasehost in het panel zetten..."
+  password_file=$(mktemp)
+  printf '%s' "$password" >"$password_file"
+  chown "$WEB_USER" "$password_file"
+  chmod 600 "$password_file"
+  result=$(runuser -u "$WEB_USER" -- "$PHP_BIN" -- "$PANEL_DIR" "$password_file" "$NODE_NAME" "$gateway" 3306 "$DBHOST_USER" "$NODE_ID" <<'PHP'
+<?php
+// Maakt of werkt een databasehost bij in het panel, zoals het panel dat zelf doet.
+[, $panel, $passwordFile, $name, $host, $port, $username, $nodeId] = $argv;
+require $panel . '/vendor/autoload.php';
+$app = require $panel . '/bootstrap/app.php';
+$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+
+$password = file_get_contents($passwordFile);
+$model = Pterodactyl\Models\DatabaseHost::query()->where('host', $host)->where('port', (int) $port)->first()
+    ?? new Pterodactyl\Models\DatabaseHost();
+$model->forceFill([
+    'name' => 'Databases ' . $name,
+    'host' => $host,
+    'port' => (int) $port,
+    'username' => $username,
+    // Het panel bewaart dit wachtwoord versleuteld met de app-sleutel.
+    'password' => $model->hasCast('password') ? $password : encrypt($password),
+    'max_databases' => null,
+    'node_id' => (int) $nodeId,
+]);
+$model->save();
+echo 'Databasehost ' . $model->id . PHP_EOL;
+PHP
+  ) || true
+  rm -f "$password_file"
+
+  if [[ "$result" != *"Databasehost "* ]]; then
+    error "Kon de databasehost niet in het panel zetten: $result"
+    exit 1
+  fi
+  DBHOST_DONE="$gateway:3306"
+  success "Databases voor gameservers ingesteld."
+}
+
 # ---------------- Panel op een andere server ---------------- #
 
 API_HEADERS=""
@@ -288,6 +407,9 @@ goodbye() {
   if [ -n "$ALLOCATION_IP" ]; then
     output "Poorten:   $NODE_PORTS op $ALLOCATION_IP"
   fi
+  if [ -n "${DBHOST_DONE:-}" ]; then
+    output "Databases: databasehost $DBHOST_DONE (gebruiker $DBHOST_USER) staat in het panel"
+  fi
   output ""
   output "In het panel staat de node onder Admin > Nodes; het hartje wordt binnen een minuut groen."
   print_brake 70
@@ -342,6 +464,14 @@ perform_link() {
     open_game_ports
   fi
   start_wings
+
+  if [ "$NODE_DBHOST" == true ]; then
+    if [ -n "$PANEL_URL" ]; then
+      warning "Databases automatisch instellen kan alleen als het panel op deze server staat; overgeslagen."
+    else
+      setup_dbhost
+    fi
+  fi
   goodbye
 }
 

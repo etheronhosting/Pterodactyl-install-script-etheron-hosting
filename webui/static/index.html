@@ -59,7 +59,13 @@
         <fieldset class="field">
           <legend id="address-legend">Hoe moet je panel bereikbaar zijn?</legend>
           <label class="radio"><input type="radio" name="address" value="domein" checked> <span>Met mijn eigen domein</span></label>
-          <label class="radio" id="address-nip"><input type="radio" name="address" value="nipio"> <span>Ik heb geen domein: gebruik het gratis adres <strong id="nip-name"></strong></span></label>
+          <label class="radio" id="address-nip"><input type="radio" name="address" value="nipio"> <span>Ik heb geen domein: gebruik een gratis nip.io-adres</span></label>
+          <div class="indent field" id="nip-field" hidden>
+            <label for="nip-label">Eigen naam (optioneel)</label>
+            <input id="nip-label" autocapitalize="off" spellcheck="false" maxlength="40" placeholder="mijnpanel">
+            <p class="hint">Je adres wordt <strong id="nip-name"></strong></p>
+            <p class="field-error" data-error-for="nip-label" role="alert"></p>
+          </div>
           <label class="radio"><input type="radio" name="address" value="ip"> <span>Alleen het IP-adres <strong id="ip-name"></strong> (zonder HTTPS)</span></label>
           <p class="hint" id="address-hint"></p>
         </fieldset>
@@ -196,8 +202,14 @@
         <h2>Wings (node)</h2>
         <p class="lead">Wings draait je gameservers in Docker. Na de installatie koppel je deze node aan je panel; dat kan ook hier in de browser.</p>
 
-        <label class="check"><input type="checkbox" id="dbhost" data-key="DBHOST"> Databases voor gameservers mogelijk maken</label>
-        <p class="hint">Gameservers kunnen dan een eigen MySQL-database krijgen. MariaDB wordt daarvoor op deze server geïnstalleerd.</p>
+        <fieldset class="field">
+          <legend>Databases voor gameservers</legend>
+          <p class="hint">Gameservers kunnen dan een eigen MySQL-database krijgen, bijvoorbeeld voor plugins.</p>
+          <label class="radio" id="dbhost-mode-auto"><input type="radio" name="dbhost-mode" value="auto"> <span>Automatisch instellen <span class="badge">aanbevolen</span></span></label>
+          <label class="radio"><input type="radio" name="dbhost-mode" value="manual"> <span>Zelf instellen</span></label>
+          <label class="radio"><input type="radio" name="dbhost-mode" value="none" checked> <span>Niet nodig</span></label>
+          <p class="hint" id="dbhost-mode-hint"></p>
+        </fieldset>
 
         <div id="dbhost-fields" class="indent" hidden>
           <div class="field">
@@ -291,6 +303,7 @@
               <p class="field-error" data-error-for="NODE_PORTS" role="alert"></p>
             </div>
             <p class="hint" id="node-address"></p>
+            <p class="hint" id="node-dbhost-note" hidden>De databases voor gameservers worden meteen ook ingesteld en in je panel gezet.</p>
             <div class="row">
               <button type="button" class="btn primary" id="btn-node">Node aanmaken en Wings starten</button>
             </div>
@@ -301,6 +314,7 @@
 
           <details class="advanced" id="manual-config">
             <summary>Liever zelf koppelen in het panel?</summary>
+            <p class="notice warn" id="manual-dbhost-note" hidden>Bij zelf koppelen worden de databases voor gameservers niet automatisch ingesteld.</p>
             <ol class="steps-list">
               <li>Log in op je panel en ga naar <strong>Admin → Nodes → Create New</strong>.</li>
               <li id="wings-config-fqdn">Vul bij <strong>FQDN</strong> het domein of IP-adres van deze server in.</li>

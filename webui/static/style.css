@@ -390,6 +390,10 @@ select[aria-invalid="true"] {
   margin: 0.75rem 0 0 1.6rem;
 }
 
+.indent.field {
+  margin-bottom: 1rem;
+}
+
 .advanced {
   margin: 1.25rem 0 0;
   border-top: 1px solid var(--border);

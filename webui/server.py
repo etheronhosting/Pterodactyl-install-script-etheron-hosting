@@ -67,7 +67,9 @@ PANEL_KEYS = [
     "ADMIN_EMAIL", "ADMIN_USERNAME", "ADMIN_FIRSTNAME", "ADMIN_LASTNAME", "ADMIN_PASSWORD",
 ]
 WINGS_KEYS = ["DBHOST", "DBHOST_USER", "DBHOST_PASSWORD", "DBHOST_ALLOW", "DBHOST_FIREWALL"]
-NODE_KEYS = ["NODE_NAME", "NODE_LOCATION", "NODE_PORTS", "NODE_FQDN", "PANEL_URL", "PANEL_API_KEY"]
+NODE_KEYS = ["NODE_NAME", "NODE_LOCATION", "NODE_PORTS", "NODE_FQDN", "PANEL_URL", "PANEL_API_KEY", "NODE_DBHOST"]
+# Keuzes uit de wizard die de server alleen onthoudt voor de pagina (geen installatie-instellingen).
+JOB_FLAGS = ("DBHOST_AUTO",)
 INSTALLERS = {"panel": ["panel"], "wings": ["wings"], "beide": ["panel", "wings"], "node": ["node"]}
 INSTALL_ACTIONS = ("panel", "wings", "beide")
 LOG_PATH = "/var/log/etheron-installer.log"
@@ -363,7 +365,7 @@ class Installer:
             self.busy.release()
         return 200, {"ok": not errors, "errors": errors}
 
-    def install(self, action, settings):
+    def install(self, action, settings, flags=None):
         if action not in INSTALL_ACTIONS:
             raise ValueError("Kies wat je wilt installeren.")
         if not self.busy.acquire(blocking=False):
@@ -386,6 +388,8 @@ class Installer:
                 self.job.state = "running"
                 self.job.action = action
                 self.job.flags = {key: bool(settings.get(key)) for key in ("LETSENCRYPT", "ASSUME_SSL", "DBHOST")}
+                if isinstance(flags, dict):
+                    self.job.flags.update({key: bool(flags.get(key)) for key in JOB_FLAGS})
                 self.job.lines = []
             threading.Thread(target=self.follow, args=(process, config), daemon=True).start()
             started = True
@@ -603,7 +607,7 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/check":
                 return self.send_json(*self.app.check(data.get("action"), data.get("settings")))
             if path == "/api/install":
-                return self.send_json(*self.app.install(data.get("action"), data.get("settings")))
+                return self.send_json(*self.app.install(data.get("action"), data.get("settings"), data.get("flags")))
             if path == "/api/node":
                 return self.send_json(*self.app.link_node(data.get("settings")))
             if path == "/api/wings-config":

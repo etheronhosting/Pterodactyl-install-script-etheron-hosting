@@ -46,8 +46,9 @@ class BuildConfigTest(unittest.TestCase):
         self.assertIn('ADMIN_USERNAME="beheerder"', text)
 
     def test_node_allows_only_node_keys(self):
-        text = server.build_config("node", {"NODE_NAME": "node1", "PANEL_API_KEY": "ptla_abc"})
+        text = server.build_config("node", {"NODE_NAME": "node1", "PANEL_API_KEY": "ptla_abc", "NODE_DBHOST": True})
         self.assertIn('NODE_NAME="node1"', text)
+        self.assertIn('NODE_DBHOST="true"', text)
         self.assertIn('PANEL_API_KEY="ptla_abc"', text)
         with self.assertRaises(ValueError):
             server.build_config("node", {"ADMIN_PASSWORD": "geheim123"})

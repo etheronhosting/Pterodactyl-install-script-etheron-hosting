@@ -70,7 +70,7 @@ validate_settings() {
     check_setting WINGS_RELEASE valid_release_tag "release-tag zoals v1.11.13"
   fi
   if [ "$DBHOST" == true ]; then
-    check_setting DBHOST_USER valid_database_identifier "letters, cijfers en _, maximaal 64 tekens"
+    check_setting DBHOST_USER valid_dbhost_user "letters, cijfers en _, maximaal 32 tekens"
     check_setting DBHOST_PASSWORD valid_db_password "geen spaties, aanhalingstekens, \\, \$, # of \`, maximaal 128 tekens"
     check_setting DBHOST_ALLOW valid_dbhost_allow "127.0.0.1, % of het IP-adres/de hostnaam van het panel"
   fi

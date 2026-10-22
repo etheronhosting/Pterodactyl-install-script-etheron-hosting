@@ -52,7 +52,7 @@ Beveiliging: zonder de code uit de link is de wizard niet bereikbaar. Het verkee
 
 ### Geen domein? nip.io
 
-Wie geen eigen domein heeft, kan een gratis adres van [nip.io](https://nip.io/) gebruiken. Voor een server met IP-adres `203.0.113.10` is dat `203-0-113-10.nip.io`; dat adres wijst automatisch naar de server en werkt met Let's Encrypt, dus met HTTPS.
+Wie geen eigen domein heeft, kan een gratis adres van [nip.io](https://nip.io/) gebruiken. Voor een server met IP-adres `203.0.113.10` is dat `203-0-113-10.nip.io`; dat adres wijst automatisch naar de server en werkt met Let's Encrypt, dus met HTTPS. Een eigen naam ervoor kan ook, bijvoorbeeld `mijnpanel-203-0-113-10.nip.io`. Het IP-adres blijft altijd in de naam staan, want nip.io haalt het adres daaruit.
 
 - De webinstaller biedt dit als keuze aan, naast een eigen domein en alleen het IP-adres.
 - De installer in de terminal stelt het voor als standaardantwoord bij de vraag naar het adres.
@@ -135,6 +135,15 @@ Hoe het werkt:
 | `NODE_PORTS` | node | `25565-25600` | Poorten voor gameservers (max. 1000), gaan ook open in de firewall |
 | `NODE_FQDN` | node | domein met certificaat, anders IP | Adres waarop het panel Wings bereikt |
 | `PANEL_URL`, `PANEL_API_KEY` | node | leeg | Alleen als het panel op een andere server staat |
+| `NODE_DBHOST` | node | `false` | Databases voor gameservers automatisch instellen en in het panel zetten (alleen met het panel op dezelfde server) |
+
+### Databases voor gameservers
+
+In de webinstaller kiest de klant bij Wings tussen drie opties:
+
+- **Automatisch** (alleen als het panel op dezelfde server staat): bij het koppelen van de node maakt de installer een databasegebruiker aan met een willekeurig wachtwoord en zet hij de databasehost meteen in het panel, gekoppeld aan de node. Gameservers draaien in Docker en bereiken MariaDB via de gateway van het Docker-netwerk van Wings (standaard `172.18.0.1`). MariaDB luistert daarvoor op alle adressen; de firewall laat poort 3306 alleen toe vanuit het Docker-netwerk. Pterodactyl heeft hier geen API voor, daarom kan dit niet als het panel op een andere server staat.
+- **Zelf instellen:** de klant kiest gebruikersnaam en wachtwoord (en eventueel toegang vanaf een panel elders) en voegt de databasehost zelf toe onder Admin → Databases.
+- **Niet nodig.**
 
 Staat er een `NODE_*`- of `PANEL_*`-instelling in het bestand, dan koppelt `wings` of `beide` Wings na de installatie meteen aan het panel. Alleen koppelen kan met `./install.sh node --config bestand.conf`.
 
