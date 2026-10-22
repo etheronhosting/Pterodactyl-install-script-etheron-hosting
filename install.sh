@@ -55,7 +55,7 @@ EOF
 # Bij 'bash <(curl ...)' staat de rest van het project niet naast dit script.
 # Download dan de volledige release en start die.
 bootstrap() {
-  local status=0
+  local status=0 http_code
 
   if [ -z "$ETHERON_REPO" ]; then
     echo "* FOUT: ETHERON_REPO is niet ingesteld, dus de installer kan zichzelf niet downloaden." >&2
@@ -75,9 +75,21 @@ bootstrap() {
   trap 'rm -rf "$BOOTSTRAP_DIR"' EXIT
 
   echo "* Etheron-installer $ETHERON_REF downloaden van github.com/$ETHERON_REPO..."
-  curl -fsSL "https://github.com/$ETHERON_REPO/archive/$ETHERON_REF.tar.gz" | tar -xz -C "$BOOTSTRAP_DIR" --strip-components=1
+  http_code=$(curl -sSL -o "$BOOTSTRAP_DIR/installer.tar.gz" -w '%{http_code}' \
+    "https://github.com/$ETHERON_REPO/archive/$ETHERON_REF.tar.gz") || http_code="000"
+  if [ "$http_code" == "404" ]; then
+    echo "* FOUT: versie $ETHERON_REF van de installer staat (nog) niet op GitHub." >&2
+    echo "* Wil je de nieuwste code van main gebruiken? Zet dan ETHERON_REF=main voor het commando:" >&2
+    echo "*   ETHERON_REF=main bash <(curl -fsSL https://raw.githubusercontent.com/$ETHERON_REPO/main/install.sh) $*" >&2
+    exit 1
+  elif [ "$http_code" != "200" ]; then
+    echo "* FOUT: downloaden van de installer is mislukt (HTTP $http_code). Controleer de internetverbinding van de server." >&2
+    exit 1
+  fi
+  mkdir "$BOOTSTRAP_DIR/installer"
+  tar -xzf "$BOOTSTRAP_DIR/installer.tar.gz" -C "$BOOTSTRAP_DIR/installer" --strip-components=1
 
-  bash "$BOOTSTRAP_DIR/install.sh" "$@" || status=$?
+  bash "$BOOTSTRAP_DIR/installer/install.sh" "$@" || status=$?
   exit "$status"
 }
 

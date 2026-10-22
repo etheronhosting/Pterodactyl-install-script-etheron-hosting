@@ -33,10 +33,10 @@ Draai alles als root.
 De makkelijkste route voor klanten: één commando op de server, daarna gaat alles in de browser.
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/etheronhosting/Pterodactyl-install-script-etheron-hosting/main/install.sh) web
+ETHERON_REF=main bash <(curl -fsSL https://raw.githubusercontent.com/etheronhosting/Pterodactyl-install-script-etheron-hosting/main/install.sh) web
 ```
 
-Zolang release `v1.0.0` nog niet is getagd, zet je er `ETHERON_REF=main` voor (zie hieronder).
+`ETHERON_REF=main` is nodig zolang release `v1.0.0` nog niet is getagd; daarna kan het weg (zie hieronder).
 
 Wat er gebeurt:
 
