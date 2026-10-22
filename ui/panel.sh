@@ -134,9 +134,18 @@ ask_admin() {
 }
 
 ask_fqdn() {
+  local nip
+  nip=$(server_nip_name)
+
+  output "Vul je eigen domein in (bijv. panel.voorbeeld.nl) of het IP-adres van deze server."
+  if [ -n "$nip" ]; then
+    output "Geen domein? Druk dan op Enter voor het gratis adres $nip;"
+    output "dat wijst automatisch naar deze server en werkt met Let's Encrypt."
+  fi
   while true; do
-    echo -n "* Domeinnaam van het panel (bijv. panel.voorbeeld.nl) of IP-adres: "
+    echo -n "* Adres van het panel${nip:+ [$nip]}: "
     read -r FQDN
+    FQDN="${FQDN:-$nip}"
     valid_hostname "$FQDN" && break
     error "Voer een geldige domeinnaam of een geldig IP-adres in."
   done

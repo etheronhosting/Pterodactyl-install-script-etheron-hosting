@@ -138,6 +138,11 @@ pass_if "API-sleutel" valid_api_key ptla_AbCdEfGhIjKlMnOpQrStUvWxYz0123456789abc
 fail_if "client-sleutel is geen applicatiesleutel" valid_api_key ptlc_AbCdEfGhIjKlMnOpQrStUvWxYz0123456789
 fail_if "API-sleutel te kort" valid_api_key ptla_abc
 
+pass_if "nip.io-adres voor IPv4" test "$(nip_name 185.114.156.248)" = 185-114-156-248.nip.io
+pass_if "geen nip.io-adres voor IPv6" test -z "$(nip_name 2001:db8::1)"
+pass_if "geen nip.io-adres voor onzin" test -z "$(nip_name 999.1.1.1)"
+pass_if "nip.io-adres is een geldig domein" valid_domain "$(nip_name 185.114.156.248)"
+
 pass_if "release-tag" valid_release_tag v1.11.13
 fail_if "release-tag zonder v" valid_release_tag 1.11.13
 pass_if "panel-versie 2" valid_panel_version 2

@@ -57,6 +57,14 @@
         <h2>Domein en beveiliging</h2>
 
         <fieldset class="field">
+          <legend id="address-legend">Hoe moet je panel bereikbaar zijn?</legend>
+          <label class="radio"><input type="radio" name="address" value="domein" checked> <span>Met mijn eigen domein</span></label>
+          <label class="radio" id="address-nip"><input type="radio" name="address" value="nipio"> <span>Ik heb geen domein: gebruik het gratis adres <strong id="nip-name"></strong></span></label>
+          <label class="radio"><input type="radio" name="address" value="ip"> <span>Alleen het IP-adres <strong id="ip-name"></strong> (zonder HTTPS)</span></label>
+          <p class="hint" id="address-hint"></p>
+        </fieldset>
+
+        <fieldset class="field" id="https-field">
           <legend>Beveiligde verbinding (HTTPS)</legend>
           <label class="radio"><input type="radio" name="https" value="letsencrypt" checked> <span>Automatisch met Let's Encrypt <span class="badge">aanbevolen · gratis</span></span></label>
           <label class="radio" id="https-own"><input type="radio" name="https" value="eigen"> Ik gebruik een eigen certificaat</label>
@@ -86,7 +94,7 @@
         <div class="dns" id="dns-field">
           <div class="dns-head">
             <button type="button" class="btn secondary small" id="btn-dns">Domein controleren</button>
-            <span class="hint" id="dns-hint">We kijken of je domein naar deze server wijst.</span>
+            <span class="hint" id="dns-hint">We kijken of het adres naar deze server wijst.</span>
           </div>
           <div class="dns-result" id="dns-result" hidden></div>
           <label class="check" id="dns-override-field" hidden><input type="checkbox" id="dns-override"> Toch doorgaan. Ik weet zeker dat het domein goed staat (bijvoorbeeld net aangepast).</label>

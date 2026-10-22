@@ -113,6 +113,25 @@ const hasWings = () => state.action === 'wings' || state.action === 'beide';
 const isIp = (value) => IPV4_RE.test(value) || value.includes(':');
 const fqdnValue = () => val('fqdn').replace(/\.$/, '');
 const steps = () => STEPS[state.action || 'beide'];
+const addressChoice = () => radio('address');
+const nipName = () => (state.info && state.info.nipName) || '';
+
+// Het adres van het panel of de node volgens de gekozen manier van bereikbaar zijn.
+function currentFqdn() {
+  const choice = addressChoice();
+  if (choice === 'nipio') return nipName();
+  if (choice === 'ip') return state.info ? state.info.address : '';
+  return fqdnValue();
+}
+
+// nip.io: altijd Let's Encrypt. Alleen IP: geen HTTPS. Eigen domein: zelf kiezen
+// voor het panel; voor Wings betekent een domein Let's Encrypt.
+function httpsChoice() {
+  const choice = addressChoice();
+  if (choice === 'nipio') return 'letsencrypt';
+  if (choice === 'ip') return 'geen';
+  return hasPanel() ? radio('https') : 'letsencrypt';
+}
 
 class Forbidden extends Error {}
 
@@ -202,26 +221,43 @@ function updateForm() {
   const panel = hasPanel();
   const wings = hasWings();
 
-  // Een eigen certificaat kan alleen voor het panel.
-  $('#https-own').hidden = !panel;
-  if (!panel && radio('https') === 'eigen') {
-    $('input[name="https"][value="letsencrypt"]').checked = true;
+  // nip.io kent alleen IPv4: zonder IPv4-adres is die keuze er niet.
+  $('#address-nip').hidden = !nipName();
+  if (!nipName() && addressChoice() === 'nipio') {
+    $('input[name="address"][value="domein"]').checked = true;
   }
-  const https = radio('https');
+  const choice = addressChoice();
+  const address = state.info ? state.info.address : 'deze server';
+  $('#nip-name').textContent = nipName();
+  $('#ip-name').textContent = address;
+  $('#address-legend').textContent = panel ? 'Hoe moet je panel bereikbaar zijn?' : 'Hoe moet deze node bereikbaar zijn?';
+  const addressHints = {
+    domein: `Maak bij je domeinbeheer een A-record aan dat naar ${address} wijst.`,
+    nipio: `Dit adres van nip.io wijst automatisch naar ${address}. Je krijgt er gratis een HTTPS-certificaat bij en hoeft zelf niets in te stellen.`,
+    ip: panel
+      ? `Je panel wordt bereikbaar via http://${address}. Wachtwoorden gaan dan onversleuteld over het internet; alleen geschikt om te testen.`
+      : `Wings wordt bereikbaar via http://${address}:8080. Dat werkt alleen als je panel ook zonder HTTPS draait.`,
+  };
+  $('#address-hint').textContent = addressHints[choice];
 
-  $('#fqdn-field').hidden = !panel && https === 'geen';
+  // De HTTPS-keuze is er alleen voor een eigen domein van het panel.
+  $('#https-field').hidden = choice !== 'domein' || !panel;
+  const https = httpsChoice();
+
+  $('#fqdn-field').hidden = choice !== 'domein';
   $('#email-field').hidden = !panel && https !== 'letsencrypt';
   $('#le-terms-field').hidden = https !== 'letsencrypt';
   $('#dns-field').hidden = https === 'geen';
 
-  const address = state.info ? state.info.address : 'deze server';
-  $('#fqdn-hint').textContent = panel
-    ? `Maak bij je domeinbeheer een A-record aan dat naar ${address} wijst. Zonder HTTPS mag je ook het IP-adres invullen.`
-    : `Het domein van deze node, bijvoorbeeld node1.jouwdomein.nl. Het A-record moet naar ${address} wijzen.`;
+  $('#fqdn-hint').textContent = panel ? 'Bijvoorbeeld panel.jouwdomein.nl.' : 'Bijvoorbeeld node1.jouwdomein.nl.';
   $('#fqdn').placeholder = panel ? 'panel.jouwdomein.nl' : 'node1.jouwdomein.nl';
-  $('#email-hint').textContent = panel
-    ? 'Voor meldingen over je certificaat. Het panel gebruikt dit adres ook als afzender.'
-    : 'Voor meldingen over je certificaat.';
+  if (https !== 'letsencrypt') {
+    $('#email-hint').textContent = 'Het panel gebruikt dit adres als afzender van e-mails.';
+  } else {
+    $('#email-hint').textContent = panel
+      ? 'Voor meldingen over je certificaat. Het panel gebruikt dit adres ook als afzender.'
+      : 'Voor meldingen over je certificaat.';
+  }
 
   const httpsHints = {
     letsencrypt: 'Je krijgt gratis een certificaat dat automatisch wordt verlengd. Je domein moet daarvoor al naar deze server wijzen.',
@@ -256,7 +292,7 @@ function resetDns() {
 }
 
 async function runDns() {
-  const fqdn = fqdnValue();
+  const fqdn = currentFqdn();
   const button = $('#btn-dns');
   const result = $('#dns-result');
   $('[data-error-for="dns"]').textContent = '';
@@ -291,14 +327,16 @@ async function runDns() {
 
 async function validateDomain() {
   const panel = hasPanel();
-  const https = radio('https');
-  const fqdn = fqdnValue();
+  const https = httpsChoice();
+  const fqdn = currentFqdn();
   let ok = true;
 
   if (!$('#fqdn-field').hidden) {
     if (!fqdn) ok = setError('FQDN', 'Vul een domeinnaam in.');
     else if (!HOST_RE.test(fqdn) && !isIp(fqdn)) ok = setError('FQDN', 'Dit is geen geldige domeinnaam.');
-    else if (https !== 'geen' && isIp(fqdn)) ok = setError('FQDN', 'Voor HTTPS heb je een domeinnaam nodig, geen IP-adres.');
+    else if (https !== 'geen' && isIp(fqdn)) {
+      ok = setError('FQDN', "Voor HTTPS heb je een domeinnaam nodig. Geen domein? Kies hierboven het gratis nip.io-adres of 'Alleen het IP-adres'.");
+    }
   }
   if (!$('#email-field').hidden && !EMAIL_RE.test(val('email'))) {
     ok = setError('EMAIL', 'Vul een geldig e-mailadres in.');
@@ -371,15 +409,16 @@ async function validateStep(name) {
 // ---------------- Instellingen ---------------- //
 
 function collectSettings() {
-  const https = radio('https');
-  const fqdn = fqdnValue();
+  const https = httpsChoice();
+  const fqdn = currentFqdn();
   const settings = {
     FIREWALL: checked('firewall'),
     LETSENCRYPT: https === 'letsencrypt',
     // Alleen uitzetten als de klant bewust doorgaat na een mislukte controle.
     VERIFY_DNS: !(state.dns.fqdn === fqdn && !state.dns.ok && checked('dns-override')),
   };
-  if (!$('#fqdn-field').hidden) settings.FQDN = fqdn;
+  // Het panel heeft altijd een adres nodig; Wings alleen voor HTTPS.
+  if (hasPanel() || https === 'letsencrypt') settings.FQDN = fqdn;
   if (!$('#email-field').hidden) settings.EMAIL = val('email');
 
   if (hasPanel()) {
@@ -421,8 +460,8 @@ function renderSummary() {
   list.replaceChildren();
   group('Algemeen');
   row('Installatie', ACTION_LABELS[state.action]);
-  if (settings.FQDN) row('Domein', settings.FQDN);
-  row('HTTPS', HTTPS_LABELS[radio('https')]);
+  if (settings.FQDN) row('Adres', addressChoice() === 'nipio' ? `${settings.FQDN} (gratis nip.io-adres)` : settings.FQDN);
+  row('HTTPS', HTTPS_LABELS[httpsChoice()]);
   if (settings.EMAIL) row('E-mailadres', settings.EMAIL);
   row('Firewall instellen', settings.FIREWALL ? 'Ja' : 'Nee');
 
@@ -909,6 +948,10 @@ function bindEvents() {
     updateForm();
   }));
   $$('input[name="https"], input[name="dbhost-access"]').forEach((input) => input.addEventListener('change', updateForm));
+  $$('input[name="address"]').forEach((input) => input.addEventListener('change', () => {
+    resetDns();
+    updateForm();
+  }));
   ['firewall', 'dbhost', 'panel-version', 'email'].forEach((id) => $('#' + id).addEventListener('input', updateForm));
   ['firewall', 'dbhost', 'panel-version'].forEach((id) => $('#' + id).addEventListener('change', updateForm));
   $('#fqdn').addEventListener('input', resetDns);

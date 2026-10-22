@@ -42,13 +42,23 @@ Wat er gebeurt:
 
 1. De installer zet Python 3 en OpenSSL klaar, maakt een tijdelijk certificaat en start een webpagina op poort 8443. Die draait als systemd-service (`etheron-webinstaller`), dus het SSH-venster mag daarna dicht.
 2. In de terminal verschijnt een link met een eenmalige toegangscode, bijvoorbeeld `https://203.0.113.10:8443/?token=…`. De browser waarschuwt voor het certificaat; dat is verwacht. De vingerafdruk staat in de terminal.
-3. De wizard vraagt wat je wilt installeren (panel, Wings of beide), het domein en HTTPS, het beheerdersaccount en de Wings-opties. Het domein wordt meteen gecontroleerd, en alle instellingen worden op de server gecontroleerd voordat er iets gebeurt.
+3. De wizard vraagt wat je wilt installeren (panel, Wings of beide), hoe de server bereikbaar moet zijn (eigen domein, gratis nip.io-adres of alleen het IP-adres), het beheerdersaccount en de Wings-opties. Het domein wordt meteen gecontroleerd, en alle instellingen worden op de server gecontroleerd voordat er iets gebeurt.
 4. Tijdens de installatie zie je de voortgang live. Je kunt de pagina sluiten en later opnieuw openen met dezelfde link.
 5. Na een Wings-installatie koppelt de wizard de node met één klik aan het panel. Hij maakt een locatie, een node en poorten voor gameservers aan, zet die poorten open in de firewall en start Wings. Staat het panel op dezelfde server (Panel en Wings), dan is daar niets extra's voor nodig. Staat het panel elders, dan vul je het adres van het panel en een Application API-sleutel in (Admin → Application API, Read & Write op Locations, Nodes en Allocations). Liever handmatig? Plak dan de configuratie van de node uit het panel.
 
 De webinstaller stopt vanzelf 30 minuten na de installatie, na een uur zonder gebruik, of als je op "Webinstaller afsluiten" klikt. Zelf stoppen kan met `systemctl stop etheron-webinstaller`. Poort 8443 gaat alleen open zolang de webinstaller draait. Een andere poort kies je met `ETHERON_WEB_PORT=9443` voor het commando. Achter een firewall van de hostingprovider moet die poort ook daar open staan.
 
 Beveiliging: zonder de code uit de link is de wizard niet bereikbaar. Het verkeer loopt via HTTPS, en de code staat niet in het logbestand. Instellingenbestanden met wachtwoorden worden meteen na gebruik verwijderd.
+
+### Geen domein? nip.io
+
+Wie geen eigen domein heeft, kan een gratis adres van [nip.io](https://nip.io/) gebruiken. Voor een server met IP-adres `203.0.113.10` is dat `203-0-113-10.nip.io`; dat adres wijst automatisch naar de server en werkt met Let's Encrypt, dus met HTTPS.
+
+- De webinstaller biedt dit als keuze aan, naast een eigen domein en alleen het IP-adres.
+- De installer in de terminal stelt het voor als standaardantwoord bij de vraag naar het adres.
+- Onbegeleid vul je het zelf in, bijvoorbeeld `FQDN=203-0-113-10.nip.io`.
+
+nip.io werkt alleen met IPv4. Let's Encrypt geeft voor alle nip.io-adressen samen een ruime, maar gedeelde limiet. Lukt het aanvragen daardoor een keer niet, dan draait het panel eerst op HTTP en meldt de installer dat. Je kunt dan later opnieuw een certificaat aanvragen, of `203-0-113-10.sslip.io` gebruiken: een vergelijkbare dienst van dezelfde makers.
 
 ### Met de one-liner
 

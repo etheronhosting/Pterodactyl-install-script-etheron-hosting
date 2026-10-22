@@ -922,6 +922,21 @@ server_address() {
   echo "$address"
 }
 
+# Gratis nip.io-adres voor een IPv4-adres, bijv. 192.0.2.10 -> 192-0-2-10.nip.io.
+# Leeg voor IPv6 of ongeldige invoer (nip.io kent geen IPv6).
+nip_name() {
+  if is_ip_address "$1" && [[ "$1" != *:* ]]; then
+    echo "${1//./-}.nip.io"
+  fi
+}
+
+# nip.io-adres van deze server (leeg zonder publiek IPv4-adres).
+server_nip_name() {
+  # Uitvoer van een eventuele installatie van curl niet in het resultaat laten belanden.
+  ensure_curl >&2
+  nip_name "$(server_address)"
+}
+
 # Controleert of alle A- en AAAA-records van $1 naar deze server wijzen. Let's
 # Encrypt kan elk van die adressen gebruiken, dus één fout record is genoeg om
 # de aanvraag te laten mislukken.

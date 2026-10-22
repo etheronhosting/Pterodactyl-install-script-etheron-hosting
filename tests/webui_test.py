@@ -72,6 +72,15 @@ class BuildConfigTest(unittest.TestCase):
             server.build_config("panel", ["FQDN"])
 
 
+class NipNameTest(unittest.TestCase):
+    def test_ipv4(self):
+        self.assertEqual(server.nip_name("185.114.156.248"), "185-114-156-248.nip.io")
+
+    def test_ipv6_and_empty(self):
+        self.assertEqual(server.nip_name("2001:db8::1"), "")
+        self.assertEqual(server.nip_name(""), "")
+
+
 class ParseErrorsTest(unittest.TestCase):
     OUTPUT = (
         "\n* \x1b[0;31mFOUT\x1b[0m: ADMIN_PASSWORD ontbreekt (minimaal 8 tekens).\n\n"

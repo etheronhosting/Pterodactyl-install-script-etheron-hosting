@@ -172,6 +172,13 @@ def parse_errors(output):
     return errors
 
 
+def nip_name(address):
+    """Gratis nip.io-adres voor een IPv4-adres (nip.io kent geen IPv6)."""
+    if not address or ":" in address:
+        return ""
+    return address.replace(".", "-") + ".nip.io"
+
+
 def write_private(directory, text, suffix=".conf"):
     """Schrijft tekst naar een nieuw bestand dat alleen de eigenaar kan lezen."""
     fd, path = tempfile.mkstemp(dir=directory, suffix=suffix)
@@ -271,6 +278,7 @@ class Installer:
             "version": os.environ.get("ETHERON_VERSION", ""),
             "os": os_name(),
             "address": self.address,
+            "nipName": nip_name(self.address),
             "hostname": socket.gethostname().split(".")[0],
             "firewall": self.firewall_name,
             "webPort": self.port,

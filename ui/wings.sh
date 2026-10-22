@@ -98,12 +98,17 @@ ask_dbhost() {
 }
 
 ask_letsencrypt() {
+  local nip
   LETSENCRYPT=false
   VERIFY_DNS=false
   FQDN=""
   EMAIL=""
+  nip=$(server_nip_name)
 
   output "Let's Encrypt voor Wings werkt alleen met een domeinnaam (bijv. node1.voorbeeld.nl), niet met een IP-adres."
+  if [ -n "$nip" ]; then
+    output "Geen domein? Het gratis adres $nip wijst automatisch naar deze server."
+  fi
   if [ "$FIREWALL" == false ]; then
     output "Let's Encrypt heeft poort 80 nodig. Zorg zelf dat die open staat."
   fi
@@ -113,8 +118,9 @@ ask_letsencrypt() {
   LETSENCRYPT=true
 
   while true; do
-    echo -n "* Domeinnaam van deze node: "
+    echo -n "* Domeinnaam van deze node${nip:+ [$nip]}: "
     read -r FQDN
+    FQDN="${FQDN:-$nip}"
     FQDN="${FQDN%.}"
     if ! valid_domain "$FQDN"; then
       error "Voer een domeinnaam in (geen IP-adres of localhost)."
