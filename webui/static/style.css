@@ -685,10 +685,17 @@ select[aria-invalid="true"] {
   overflow-wrap: anywhere;
 }
 
+/* Laatste stap na de installatie: bovenaan en opvallend, zodat niemand hem mist. */
 .wings-config {
-  border-top: 1px solid var(--border);
-  padding-top: 1.25rem;
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+  padding: 1.25rem 1.25rem 0.5rem;
   margin-bottom: 1.5rem;
+}
+
+.wings-config h3 {
+  margin-top: 0;
+  color: var(--accent);
 }
 
 .steps-list {

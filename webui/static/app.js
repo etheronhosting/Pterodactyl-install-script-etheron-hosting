@@ -791,7 +791,7 @@ function finish(data) {
     }
     if (wings) {
       result.append(el('h3', { text: panel ? 'Wings is ook geïnstalleerd' : 'Wings is geïnstalleerd' }),
-        el('p', { id: 'wings-next', text: 'Koppel deze node nog aan je panel; dat kan hieronder.' }));
+        el('p', { id: 'wings-next', text: 'Koppel deze node nog aan je panel met de knop hierboven.' }));
       const fqdn = findLine(/^\*\s+\/etc\/letsencrypt\/live\/([^/]+)\//);
       const host = fqdn ? fqdn[1] : (state.info ? state.info.address : 'het IP-adres van deze server');
       $('#wings-config-fqdn').textContent = '';

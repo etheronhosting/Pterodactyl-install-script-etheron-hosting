@@ -263,6 +263,8 @@ main() {
     rm_wings_files
   fi
   rm_certificates
+  # Certificaat van de webinstaller (installer-<ip>.sslip.io), als die is gebruikt.
+  rm -rf /var/lib/etheron-webinstaller
 
   print_brake 62
   [ "$RM_PANEL" == true ] && output "Panel verwijderd."

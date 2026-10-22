@@ -10,6 +10,7 @@ Eerste versie, gebaseerd op [pterodactyl-installer v1.4.0](https://github.com/pt
 
 - Webinstaller (`install.sh web`): een tijdelijke HTTPS-wizard op de server voor klanten, met domeincontrole, live voortgang en Wings koppelen via de browser.
 - Gratis nip.io-adres voor wie geen domein heeft: in de webinstaller als keuze naast eigen domein en IP-adres (met optioneel een eigen naam, zoals `mijnpanel-203-0-113-10.nip.io`), in de terminal als voorgesteld antwoord. Werkt met Let's Encrypt.
+- Webinstaller zonder certificaatwaarschuwing: een gratis Let's Encrypt-certificaat voor `installer-<ip>.sslip.io`, met terugval op een eigen certificaat. Op de eindpagina staat het koppelen van Wings nu bovenaan.
 - Databases voor gameservers automatisch instellen (`NODE_DBHOST`): databasegebruiker met willekeurig wachtwoord, bereikbaar via het Docker-netwerk van Wings, en meteen geregistreerd in het panel. In de webinstaller te kiezen naast "Zelf instellen" en "Niet nodig".
 - Node automatisch koppelen (`installers/node.sh`): locatie, node en poorten aanmaken in het panel, poorten openzetten en Wings starten. Werkt lokaal via artisan of op afstand via de Application API; beschikbaar in de webinstaller en onbegeleid met `NODE_*`-instellingen.
 - Onbegeleide installatie met `--config <bestand>` en voorbeeldbestanden in `voorbeelden/`.

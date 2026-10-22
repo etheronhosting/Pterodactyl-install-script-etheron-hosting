@@ -40,8 +40,10 @@ ETHERON_REF=main bash <(curl -fsSL https://raw.githubusercontent.com/etheronhost
 
 Wat er gebeurt:
 
-1. De installer zet Python 3 en OpenSSL klaar, maakt een tijdelijk certificaat en start een webpagina op poort 8443. Die draait als systemd-service (`etheron-webinstaller`), dus het SSH-venster mag daarna dicht.
-2. In de terminal verschijnt een link met een eenmalige toegangscode, bijvoorbeeld `https://203.0.113.10:8443/?token=…`. De browser waarschuwt voor het certificaat; dat is verwacht. De vingerafdruk staat in de terminal.
+1. De installer zet Python 3 en OpenSSL klaar, vraagt een gratis certificaat van Let's Encrypt aan voor `installer-<ip>.sslip.io` en start een webpagina op poort 8443. Die draait als systemd-service (`etheron-webinstaller`), dus het SSH-venster mag daarna dicht.
+2. In de terminal verschijnt een link met een eenmalige toegangscode, bijvoorbeeld `https://installer-203-0-113-10.sslip.io:8443/?token=…`. De browser geeft geen certificaatwaarschuwing.
+
+   Voor het certificaat moet poort 80 kort bereikbaar zijn. Lukt de aanvraag niet (poort 80 dicht of bezet, of alleen IPv6), dan gebruikt de installer een tijdelijk eigen certificaat en een link met het IP-adres. De browser waarschuwt dan wel; de vingerafdruk van het certificaat staat in de terminal. Met `ETHERON_WEB_SELFSIGNED=1` voor het commando sla je de aanvraag over. Het certificaat staat in `/var/lib/etheron-webinstaller` (los van `/etc/letsencrypt`, zonder automatische verlenging) en wordt bij een volgende start hergebruikt zolang het nog minstens een week geldig is.
 3. De wizard vraagt wat je wilt installeren (panel, Wings of beide), hoe de server bereikbaar moet zijn (eigen domein, gratis nip.io-adres of alleen het IP-adres), het beheerdersaccount en de Wings-opties. Het domein wordt meteen gecontroleerd, en alle instellingen worden op de server gecontroleerd voordat er iets gebeurt.
 4. Tijdens de installatie zie je de voortgang live. Je kunt de pagina sluiten en later opnieuw openen met dezelfde link.
 5. Na een Wings-installatie koppelt de wizard de node met één klik aan het panel. Hij maakt een locatie, een node en poorten voor gameservers aan, zet die poorten open in de firewall en start Wings. Staat het panel op dezelfde server (Panel en Wings), dan is daar niets extra's voor nodig. Staat het panel elders, dan vul je het adres van het panel en een Application API-sleutel in (Admin → Application API, Read & Write op Locations, Nodes en Allocations). Liever handmatig? Plak dan de configuratie van de node uit het panel.

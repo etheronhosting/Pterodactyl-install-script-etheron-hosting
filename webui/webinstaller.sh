@@ -39,6 +39,11 @@ UNIT="etheron-webinstaller"
 WEB_PORT="${ETHERON_WEB_PORT:-8443}"
 WORK_PREFIX="/tmp/etheron-webinstaller."
 
+# Eigen certbot-map: los van /etc/letsencrypt, dus geen automatische verlenging,
+# en bij een volgende start wordt een nog geldig certificaat hergebruikt.
+LE_DIR="/var/lib/etheron-webinstaller/letsencrypt"
+WEB_HOST=""
+
 port_in_use() {
   ss -ltn 2>/dev/null | awk 'NR > 1 { print $4 }' | grep -qE "[:.]$1\$"
 }
@@ -74,6 +79,94 @@ close_web_port() {
   fi
 }
 
+# Opent poort 80 tijdelijk voor de controle door Let's Encrypt (alleen runtime).
+# Zet PORT80_OPENED zodat close_port_80 alleen terugdraait wat hier is geopend.
+PORT80_OPENED=""
+open_port_80() {
+  if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -q "Status: active"; then
+    if ! ufw status 2>/dev/null | grep -qE "^80(/tcp)?[[:space:]]"; then
+      ufw allow 80/tcp >/dev/null && PORT80_OPENED="ufw"
+    fi
+  elif command -v firewall-cmd >/dev/null 2>&1 && firewall-cmd --state >/dev/null 2>&1; then
+    if ! firewall-cmd --zone=public --query-port=80/tcp >/dev/null 2>&1; then
+      firewall-cmd --zone=public --add-port=80/tcp >/dev/null && PORT80_OPENED="firewalld"
+    fi
+  fi
+  return 0
+}
+
+close_port_80() {
+  case "$PORT80_OPENED" in
+  ufw) ufw delete allow 80/tcp >/dev/null 2>&1 || true ;;
+  firewalld) firewall-cmd --zone=public --remove-port=80/tcp >/dev/null 2>&1 || true ;;
+  esac
+  PORT80_OPENED=""
+}
+
+# Zet het certificaat van Let's Encrypt klaar voor de webserver.
+use_certificate() {
+  cp -L "$LE_DIR/live/$2/fullchain.pem" "$1/cert.pem"
+  (umask 077 && cp -L "$LE_DIR/live/$2/privkey.pem" "$1/key.pem")
+  WEB_HOST="$2"
+}
+
+# Vraagt een echt certificaat aan voor installer-<ip>.sslip.io, zodat de browser
+# geen waarschuwing geeft. Zet WEB_HOST en de certificaatbestanden bij succes.
+# Lukt het niet, dan geeft de functie 1 terug en volgt een eigen certificaat.
+# Overslaan kan met ETHERON_WEB_SELFSIGNED=1.
+request_certificate() {
+  local work_dir="$1" address="$2" host status=0
+
+  if [ "${ETHERON_WEB_SELFSIGNED:-}" == "1" ]; then
+    return 1
+  fi
+  # sslip.io werkt hier alleen met IPv4.
+  if ! is_ip_address "$address" || [[ "$address" == *:* ]]; then
+    return 1
+  fi
+  host="installer-${address//./-}.sslip.io"
+
+  # Nog minstens 7 dagen geldig van een vorige keer? Dan zonder certbot en poort 80 hergebruiken.
+  if openssl x509 -in "$LE_DIR/live/$host/fullchain.pem" -noout -checkend 604800 >/dev/null 2>&1; then
+    output "Bestaand certificaat voor $host wordt hergebruikt."
+    use_certificate "$work_dir" "$host"
+    return 0
+  fi
+
+  if port_in_use 80; then
+    warning "Poort 80 is in gebruik, dus geen certificaat van Let's Encrypt voor de webinstaller."
+    return 1
+  fi
+
+  output "Gratis HTTPS-certificaat aanvragen voor $host..."
+  output "Dat certificaat komt van Let's Encrypt; daarmee ga je akkoord met hun voorwaarden:"
+  output "https://letsencrypt.org/repository/"
+  case "$OS" in
+  rocky | almalinux)
+    command -v certbot >/dev/null 2>&1 || install_packages --quiet epel-release
+    ;;
+  esac
+  ensure_command certbot certbot certbot
+
+  mkdir -p "$LE_DIR"
+  chmod 700 "$(dirname "$LE_DIR")" "$LE_DIR"
+  open_port_80
+  certbot certonly --standalone --non-interactive --agree-tos --register-unsafely-without-email \
+    --keep-until-expiring --config-dir "$LE_DIR" --work-dir "$work_dir/le-work" --logs-dir "$work_dir/le-logs" \
+    -d "$host" >"$work_dir/le.log" 2>&1 || status=$?
+  close_port_80
+
+  if [ "$status" -eq 0 ] && [ -f "$LE_DIR/live/$host/fullchain.pem" ]; then
+    use_certificate "$work_dir" "$host"
+    success "Certificaat voor $host is klaar."
+    return 0
+  fi
+
+  warning "Het certificaat is niet gelukt (staat poort 80 open bij je hostingprovider?). De webinstaller gebruikt nu een tijdelijk eigen certificaat."
+  grep -iE 'error|detail|problem' "$work_dir/le.log" | tail -n 3 | sed 's/^/  /' || true
+  return 1
+}
+
 print_instructions() {
   local url="$1" fingerprint="$2"
 
@@ -82,12 +175,14 @@ print_instructions() {
   output ""
   output "  $url"
   output ""
-  output "Je browser waarschuwt dat de verbinding niet privé of niet vertrouwd is."
-  output "Dat klopt: de installer gebruikt een tijdelijk eigen certificaat. Kies"
-  output "'Geavanceerd' en daarna 'Doorgaan naar ...' om verder te gaan."
-  output "Vingerafdruk van het certificaat (SHA-256):"
-  output "  $fingerprint"
-  output ""
+  if [ -n "$fingerprint" ]; then
+    output "Je browser waarschuwt dat de verbinding niet privé of niet vertrouwd is."
+    output "Dat klopt: de installer gebruikt een tijdelijk eigen certificaat. Kies"
+    output "'Geavanceerd' en daarna 'Doorgaan naar ...' om verder te gaan."
+    output "Vingerafdruk van het certificaat (SHA-256):"
+    output "  $fingerprint"
+    output ""
+  fi
   output "Je kunt dit venster nu sluiten; de rest gaat via de browser."
   output "De webinstaller stopt vanzelf na de installatie, of na een uur zonder gebruik."
   output "Zelf stoppen: systemctl stop $UNIT"
@@ -133,16 +228,21 @@ start_webinstaller() {
     rm -rf "$work_dir"
     exit 1
   fi
-  host="$address"
-  [[ "$address" == *:* ]] && host="[$address]"
-  san="IP:$address"
+  fingerprint=""
+  if request_certificate "$work_dir" "$address"; then
+    host="$WEB_HOST"
+  else
+    host="$address"
+    [[ "$address" == *:* ]] && host="[$address]"
+    san="IP:$address"
 
-  output "Tijdelijk certificaat maken voor $address..."
-  openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes -days 2 \
-    -subj "/CN=Etheron webinstaller" -addext "subjectAltName=$san" \
-    -keyout "$work_dir/key.pem" -out "$work_dir/cert.pem" >/dev/null 2>&1
-  chmod 600 "$work_dir/key.pem"
-  fingerprint=$(openssl x509 -in "$work_dir/cert.pem" -noout -fingerprint -sha256 | cut -d= -f2)
+    output "Tijdelijk certificaat maken voor $address..."
+    openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes -days 2 \
+      -subj "/CN=Etheron webinstaller" -addext "subjectAltName=$san" \
+      -keyout "$work_dir/key.pem" -out "$work_dir/cert.pem" >/dev/null 2>&1
+    chmod 600 "$work_dir/key.pem"
+    fingerprint=$(openssl x509 -in "$work_dir/cert.pem" -noout -fingerprint -sha256 | cut -d= -f2)
+  fi
 
   token=$(gen_passwd 32)
   (umask 077 && printf '%s\n' "$token" >"$work_dir/token")
