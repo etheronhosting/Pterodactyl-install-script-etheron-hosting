@@ -286,6 +286,22 @@ ensure_command() {
   esac
 }
 
+# Minimale installaties hebben soms geen curl, en dan vaak ook geen CA-certificaten.
+ensure_curl() {
+  if command -v curl >/dev/null 2>&1; then
+    return 0
+  fi
+  case "$OS" in
+  ubuntu | debian)
+    update_repos --quiet
+    install_packages --quiet curl ca-certificates
+    ;;
+  rocky | almalinux)
+    install_packages --quiet curl ca-certificates
+    ;;
+  esac
+}
+
 # ------------------ Versies ------------------- #
 
 github_api() {
@@ -318,6 +334,7 @@ get_latest_release() {
 
 # Bepaalt PANEL_RELEASE (tag of commit), PANEL_VERSION_LABEL en PANEL_DL_URL.
 resolve_panel_version() {
+  ensure_curl
   ensure_command jq jq jq
   output "Versie-informatie van het panel ophalen..."
 
@@ -340,6 +357,7 @@ resolve_panel_version() {
 
 # Bepaalt WINGS_RELEASE en WINGS_DL_URL.
 resolve_wings_version() {
+  ensure_curl
   ensure_command jq jq jq
   output "Versie-informatie van Wings ophalen..."
 
@@ -860,6 +878,7 @@ public_addresses() {
 verify_dns() {
   local fqdn="$1" records addresses unmatched
 
+  ensure_curl
   ensure_command dig bind9-dnsutils bind-utils
   output "DNS controleren voor $fqdn..."
 

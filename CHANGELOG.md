@@ -33,4 +33,5 @@ Eerste versie, gebaseerd op [pterodactyl-installer v1.4.0](https://github.com/pt
 - Composer-installer wordt gecontroleerd met de officiële controlesom.
 - `.env` van het panel is niet meer leesbaar voor iedereen; ook verborgen bestanden krijgen de juiste eigenaar.
 - Wings-installatie op een kale Debian/Ubuntu-server: de pakketbronnen worden nu eerst bijgewerkt.
+- Op minimale installaties zonder curl installeert de installer eerst curl en CA-certificaten.
 - Certbot voor Wings stopt nginx (indien actief) bij aanvragen en verlengen, zodat poort 80 vrij is.
