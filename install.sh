@@ -27,7 +27,7 @@ set -e -o pipefail
 #
 # Niet verbonden aan het officiële Pterodactyl-project.
 
-export ETHERON_VERSION="v1.0.0"
+export ETHERON_VERSION="v1.0.1"
 
 # GitHub-repository met de releases van dit script, als "eigenaar/naam".
 ETHERON_REPO="${ETHERON_REPO:-etheronhosting/Pterodactyl-install-script-etheron-hosting}"

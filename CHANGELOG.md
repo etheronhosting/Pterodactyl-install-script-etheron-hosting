@@ -2,6 +2,18 @@
 
 Dit project volgt [semantic versioning](https://semver.org). Wijzigingen staan onder Toegevoegd, Gewijzigd of Opgelost.
 
+## v1.0.1 (uitgebracht op 2026-10-23)
+
+### Toegevoegd
+
+- `CREDITS.md`: herkomst van het project (pterodactyl-installer v1.4.0 door Vilhelm Prytz en bijdragers), wat Etheron Hosting heeft gewijzigd, onderdelen van derden en handelsmerken.
+- De terminal en de webinstaller tonen het copyright van het oorspronkelijke project en van Etheron Hosting, de licentie (GPL-3.0, zonder garantie) en een link naar de broncode.
+
+### Gewijzigd
+
+- Headers van de overgenomen scripts: het oorspronkelijke copyright staat bovenaan, met de vermelding dat het bestand in oktober 2026 door Etheron Hosting is gewijzigd.
+- README: beschrijft het project als aangepaste versie van pterodactyl-installer, met een sectie Credits en beide copyrighthouders bij de licentie. Het Etheron-logo valt volgens artikel 7(e) van de GPL-3.0 niet onder de licentie.
+
 ## v1.0.0 (uitgebracht op 2026-10-23)
 
 Eerste versie, gebaseerd op [pterodactyl-installer v1.4.0](https://github.com/pterodactyl-installer/pterodactyl-installer/releases/tag/v1.4.0).

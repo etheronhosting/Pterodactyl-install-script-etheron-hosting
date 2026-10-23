@@ -1,7 +1,7 @@
 # Etheron Pterodactyl-installer
 
 [![Controles](https://github.com/etheronhosting/Pterodactyl-install-script-etheron-hosting/actions/workflows/controles.yml/badge.svg)](https://github.com/etheronhosting/Pterodactyl-install-script-etheron-hosting/actions/workflows/controles.yml)
-![Versie](https://img.shields.io/badge/versie-1.0.0-0c94ab)
+![Versie](https://img.shields.io/badge/versie-1.0.1-0c94ab)
 [![Licentie: GPL-3.0](https://img.shields.io/badge/licentie-GPL--3.0-blue)](LICENSE)
 
 Installeer [Pterodactyl](https://pterodactyl.io/) Panel en Wings met één commando, via de browser of in de terminal.
@@ -155,7 +155,7 @@ cd Pterodactyl-install-script-etheron-hosting && ./install.sh
 
 Zet een omgevingsvariabele vóór het commando, bijvoorbeeld `ETHERON_WEB_PORT=9443 bash <(curl ...) web`.
 
-**Welke versie je krijgt.** Staat de release uit `ETHERON_VERSION` (nu `v1.0.0`) als tag op GitHub, dan download je die vaste versie. Zolang die tag er nog niet is, gebruikt de one-liner de nieuwste code van `main` en meldt hij dat. De repository moet publiek zijn.
+**Welke versie je krijgt.** Staat de release uit `ETHERON_VERSION` (nu `v1.0.1`) als tag op GitHub, dan download je die vaste versie. Zolang die tag er nog niet is, gebruikt de one-liner de nieuwste code van `main` en meldt hij dat. De repository moet publiek zijn.
 
 **Logbestand.** Alle uitvoer van de installatie staat ook in `/var/log/etheron-installer.log` (alleen leesbaar voor root).
 
@@ -384,17 +384,17 @@ Nieuwe code testen na een release kan met `ETHERON_REF=main` voor de one-liner.
 
 ## Een nieuwe versie uitbrengen
 
-1. Zet het nieuwe versienummer in `ETHERON_VERSION` in [install.sh](install.sh), bijvoorbeeld `v1.0.1`.
+1. Zet het nieuwe versienummer in `ETHERON_VERSION` in [install.sh](install.sh), bijvoorbeeld `v1.0.2`.
 2. Zet de wijzigingen en de datum in [CHANGELOG.md](CHANGELOG.md).
 3. Commit en push naar `main`.
 4. Maak de tag aan en push die:
 
    ```bash
-   git tag v1.0.1
+   git tag v1.0.2
    ```
 
    ```bash
-   git push origin v1.0.1
+   git push origin v1.0.2
    ```
 
 Vanaf dat moment downloadt de one-liner die release. Wijzigingen op `main` komen pas bij klanten met de volgende tag.
