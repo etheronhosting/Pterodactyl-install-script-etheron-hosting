@@ -4,9 +4,17 @@
 ![Versie](https://img.shields.io/badge/versie-1.0.0-0c94ab)
 [![Licentie: GPL-3.0](https://img.shields.io/badge/licentie-GPL--3.0-blue)](LICENSE)
 
-Installeer [Pterodactyl](https://pterodactyl.io/) Panel en Wings met één commando, via de browser of in de terminal. Gemaakt door [Etheron Hosting](https://etheron.nl), in het Nederlands, en gebaseerd op [pterodactyl-installer](https://github.com/pterodactyl-installer/pterodactyl-installer) v1.4.0 van Vilhelm Prytz en bijdragers.
+Installeer [Pterodactyl](https://pterodactyl.io/) Panel en Wings met één commando, via de browser of in de terminal.
 
-> Dit project is niet verbonden aan het officiële Pterodactyl-project.
+Dit is een aangepaste versie van [pterodactyl-installer](https://github.com/pterodactyl-installer/pterodactyl-installer) (v1.4.0) door Vilhelm Prytz en bijdragers. [Etheron Hosting](https://etheron.nl) heeft die vertaald naar het Nederlands en uitgebreid, onder meer met:
+
+- een webinstaller;
+- het automatisch koppelen van nodes;
+- databases voor gameservers.
+
+Zie [CREDITS.md](CREDITS.md) voor de herkomst en [CHANGELOG.md](CHANGELOG.md) voor alle wijzigingen.
+
+> Niet verbonden aan het officiële Pterodactyl-project. Pterodactyl® is een geregistreerd handelsmerk van zijn eigenaren.
 
 ## Inhoud
 
@@ -25,6 +33,7 @@ Installeer [Pterodactyl](https://pterodactyl.io/) Panel en Wings met één comma
 - [Opbouw van het project](#opbouw-van-het-project)
 - [Ontwikkelen en testen](#ontwikkelen-en-testen)
 - [Een nieuwe versie uitbrengen](#een-nieuwe-versie-uitbrengen)
+- [Credits](#credits)
 - [Licentie](#licentie)
 
 ## Snel aan de slag
@@ -406,13 +415,24 @@ Vanaf dat moment downloadt de one-liner die release. Wijzigingen op `main` komen
 
 Alle wijzigingen staan in [CHANGELOG.md](CHANGELOG.md).
 
+## Credits
+
+Deze installer bestaat dankzij [pterodactyl-installer](https://github.com/pterodactyl-installer/pterodactyl-installer):
+
+- gemaakt door [Vilhelm Prytz](https://github.com/vilhelmprytz);
+- onderhouden door [Linux123123](https://github.com/Linux123123);
+- met hulp van [veel bijdragers](https://github.com/pterodactyl-installer/pterodactyl-installer/graphs/contributors).
+
+De opzet van de installatie, de configuratiesjablonen en een groot deel van de hulpfuncties komen uit dat project. Het oorspronkelijke copyright staat in de headers van de overgenomen bestanden. Meer over de herkomst en over onderdelen van derden staat in [CREDITS.md](CREDITS.md).
+
 ## Licentie
 
-GPL-3.0, net als het origineel; zie [LICENSE](LICENSE). Verspreid je een aangepaste versie, dan moet die ook onder GPL-3.0 vallen en moet de broncode beschikbaar zijn.
+GPL-3.0, net als het origineel; zie [LICENSE](LICENSE). Verspreid je een aangepaste versie, dan moet die ook onder GPL-3.0 vallen, moet de broncode beschikbaar zijn en moeten de copyrightvermeldingen blijven staan.
+
+- Copyright © 2018–2026 Vilhelm Prytz en bijdragers (oorspronkelijk project)
+- Copyright © 2026 Etheron Hosting (aanpassingen en uitbreidingen)
 
 Uitzonderingen in `webui/static/`:
 
-- Het Etheron-logo en het favicon zijn eigendom van Etheron Hosting en vallen niet onder de GPL.
+- Het Etheron-logo en het favicon zijn handelsmerken van Etheron Hosting. Volgens artikel 7(e) van de GPL-3.0 vallen ze niet onder de licentie; vervang ze in een eigen versie.
 - Het lettertype Rubik valt onder de SIL Open Font License 1.1 (zie [OFL.txt](webui/static/fonts/OFL.txt)).
-
-Copyright © 2026 Etheron Hosting. Gebaseerd op werk dat copyright © 2018–2026 Vilhelm Prytz en bijdragers is.

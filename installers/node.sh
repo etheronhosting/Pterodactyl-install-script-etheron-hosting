@@ -5,6 +5,9 @@ set -e -o pipefail
 # Etheron Pterodactyl-installer
 #
 # Copyright (C) 2026 Etheron Hosting
+# Onderdeel van de Etheron Pterodactyl-installer, een aangepaste versie van
+# pterodactyl-installer (Copyright (C) 2018 - 2026, Vilhelm Prytz en bijdragers).
+# Zie CREDITS.md.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

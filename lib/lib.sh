@@ -3,10 +3,13 @@
 
 # Etheron Pterodactyl-installer
 #
-# Copyright (C) 2026 Etheron Hosting
-# Gebaseerd op pterodactyl-installer, Copyright (C) 2018 - 2026 Vilhelm Prytz
-# <vilhelm@prytznet.se> en bijdragers:
-# https://github.com/pterodactyl-installer/pterodactyl-installer
+# Copyright (C) 2018 - 2026, Vilhelm Prytz, <vilhelm@prytznet.se> en bijdragers
+#   Oorspronkelijk project: pterodactyl-installer,
+#   https://github.com/pterodactyl-installer/pterodactyl-installer
+# Copyright (C) 2026 Etheron Hosting (aanpassingen en uitbreidingen)
+#
+# Dit bestand is een aangepaste versie van pterodactyl-installer v1.4.0, in
+# oktober 2026 gewijzigd door Etheron Hosting. Zie CHANGELOG.md en CREDITS.md.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -130,7 +133,11 @@ welcome() {
   print_brake 70
   output "Etheron Pterodactyl-installer $ETHERON_VERSION"
   output ""
-  output "Gebaseerd op pterodactyl-installer door Vilhelm Prytz en bijdragers (GPLv3)."
+  output "Copyright (C) 2018 - 2026, Vilhelm Prytz en bijdragers (pterodactyl-installer)"
+  output "Copyright (C) 2026 Etheron Hosting (aanpassingen en uitbreidingen)"
+  output "Vrije software onder de GPL-3.0, zonder enige garantie. Broncode en licentie:"
+  output "https://github.com/etheronhosting/Pterodactyl-install-script-etheron-hosting"
+  output ""
   output "Niet verbonden aan het officiële Pterodactyl-project."
   output ""
   output "Systeem: $OS $OS_VER ($CPU_ARCHITECTURE)"

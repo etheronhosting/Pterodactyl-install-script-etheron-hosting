@@ -150,10 +150,19 @@ h3 {
   margin: 0 auto;
   padding: 1.5rem 16px 2rem;
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.5rem 1rem;
   color: var(--muted);
   font-size: 0.875rem;
+}
+
+/* Copyright, licentie en herkomst (GPL-3.0). */
+.footer .legal {
+  flex-basis: 100%;
+  margin: 0.25rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
 }
 
 /* ---------------- Opbouw ---------------- */
