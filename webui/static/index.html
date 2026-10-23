@@ -4,27 +4,33 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pterodactyl installeren · Etheron</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Ctext x='16' y='22.5' font-family='Arial,sans-serif' font-size='18' font-weight='800' fill='%23fff' text-anchor='middle'%3EE%3C/text%3E%3C/svg%3E">
+  <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="stylesheet" href="/style.css">
   <script src="/app.js" defer></script>
 </head>
 <body>
   <header class="topbar">
     <div class="topbar-inner">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">E</span><span>Etheron</span></div>
+      <a class="brand" href="https://etheron.nl" target="_blank" rel="noopener noreferrer">
+        <img class="logo" src="/logo.webp" alt="Etheron Hosting" width="188" height="28">
+      </a>
       <span class="server-info" id="server-info"></span>
     </div>
   </header>
 
   <main class="container">
-    <ol class="stepper" id="stepper" aria-label="Stappen"></ol>
+    <section class="hero" aria-labelledby="hero-title">
+      <h1 id="hero-title">Pterodactyl installeren.</h1>
+      <p>Je eigen gameserverpaneel, in een paar minuten klaar op je eigen server.</p>
+      <ol class="stepper" id="stepper" aria-label="Stappen"></ol>
+    </section>
 
     <div class="card" id="wizard" hidden>
 
       <!-- Stap: keuze -->
       <section data-step="keuze" hidden>
-        <h1>Pterodactyl installeren</h1>
-        <p class="lead">Deze wizard installeert Pterodactyl op je server. Je vult alles hier in; de installer doet de rest.</p>
+        <h2>Wat wil je installeren?</h2>
+        <p class="lead">Je vult alles hier in; de installer doet de rest.</p>
         <div class="choices" role="radiogroup" aria-label="Wat wil je installeren?">
           <label class="choice">
             <input type="radio" name="action" value="panel">
@@ -356,7 +362,7 @@
   </main>
 
   <footer class="footer">
-    <span>Etheron · Pterodactyl-installer <span id="version"></span></span>
+    <span>Etheron Hosting · Pterodactyl-installer <span id="version"></span></span>
     <a href="https://support.etheron.nl" target="_blank" rel="noopener noreferrer">Hulp nodig?</a>
   </footer>
 </body>

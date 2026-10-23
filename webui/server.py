@@ -78,12 +78,18 @@ STATIC_FILES = {
     "/": ("index.html", "text/html; charset=utf-8"),
     "/app.js": ("app.js", "application/javascript; charset=utf-8"),
     "/style.css": ("style.css", "text/css; charset=utf-8"),
+    "/logo.webp": ("logo.webp", "image/webp"),
+    "/favicon.png": ("favicon.png", "image/png"),
+    "/fonts/Rubik-Light.woff2": ("fonts/Rubik-Light.woff2", "font/woff2"),
+    "/fonts/Rubik-Regular.woff2": ("fonts/Rubik-Regular.woff2", "font/woff2"),
+    "/fonts/Rubik-Bold.woff2": ("fonts/Rubik-Bold.woff2", "font/woff2"),
 }
-PUBLIC_PATHS = ("/app.js", "/style.css")
+# Alles behalve de wizard zelf mag zonder toegangscode (ook nodig voor de foutpagina).
+PUBLIC_PATHS = tuple(path for path in STATIC_FILES if path != "/")
 
 SECURITY_HEADERS = {
     "Content-Security-Policy": (
-        "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
+        "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; "
         "connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
     ),
     "X-Content-Type-Options": "nosniff",
@@ -95,8 +101,9 @@ SECURITY_HEADERS = {
 FORBIDDEN_PAGE = """<!doctype html>
 <html lang="nl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Link ongeldig · Etheron</title><link rel="stylesheet" href="/style.css"></head>
-<body><main class="container"><div class="card">
+<title>Link ongeldig · Etheron</title><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/style.css"></head>
+<body><header class="topbar"><div class="topbar-inner"><img class="logo" src="/logo.webp" alt="Etheron Hosting" width="188" height="28"></div></header>
+<main class="container"><div class="card">
 <h1>Deze link werkt niet (meer)</h1>
 <p class="lead">De link is ongeldig of de webinstaller is inmiddels gestopt.</p>
 <p>Start de webinstaller opnieuw op je server en open de nieuwe link die daar verschijnt.</p>

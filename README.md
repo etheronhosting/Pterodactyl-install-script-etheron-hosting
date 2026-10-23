@@ -194,4 +194,6 @@ De one-liner installeert daarna de release uit `ETHERON_VERSION`. Wil je een nie
 
 GPL-3.0, net als het origineel; zie [LICENSE](LICENSE). Verspreid je een aangepaste versie, dan moet die ook onder GPL-3.0 vallen en moet de broncode beschikbaar zijn.
 
+Uitzonderingen in `webui/static/`: het Etheron-logo en het favicon zijn eigendom van Etheron Hosting en vallen niet onder de GPL. Het lettertype Rubik valt onder de SIL Open Font License 1.1 (zie [webui/static/fonts/OFL.txt](webui/static/fonts/OFL.txt)).
+
 Copyright (C) 2026 Etheron Hosting. Gebaseerd op werk dat Copyright (C) 2018 - 2026 Vilhelm Prytz en bijdragers is.

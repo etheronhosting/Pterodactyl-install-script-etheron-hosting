@@ -1,51 +1,61 @@
-/* Etheron-webinstaller. Pas --accent aan voor de huisstijlkleur. */
+/* Etheron-webinstaller, in de huisstijl van etheron.nl:
+   teal (#0c94ab) met kleurverloop, groene knoppen (#3cc154), lettertype Rubik
+   en de Etheron-vorm met de hoek rechtsonder recht. */
 
-:root {
-  --bg: #f4f6fa;
-  --card: #ffffff;
-  --text: #182033;
-  --muted: #5a6478;
-  --border: #dce2ec;
-  --input: #ffffff;
-  --accent: #4f46e5;
-  --accent-hover: #4338ca;
-  --accent-text: #ffffff;
-  --accent-soft: #eef0ff;
-  --ok: #15803d;
-  --ok-soft: #e7f6ec;
-  --warn: #a15c07;
-  --warn-soft: #fff5e5;
-  --err: #b42318;
-  --err-soft: #fdeceb;
-  --log-bg: #0f1522;
-  --log-text: #d6dbe6;
-  --radius: 14px;
-  --shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 10px 30px rgba(16, 24, 40, 0.06);
-  color-scheme: light;
+@font-face {
+  font-family: "Rubik";
+  src: url("/fonts/Rubik-Light.woff2") format("woff2");
+  font-weight: 300;
+  font-display: swap;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0d121c;
-    --card: #151c2a;
-    --text: #e6e9f0;
-    --muted: #9aa4b8;
-    --border: #283247;
-    --input: #101624;
-    --accent: #8b85ff;
-    --accent-hover: #a29dff;
-    --accent-text: #0d121c;
-    --accent-soft: #222844;
-    --ok: #4ade80;
-    --ok-soft: #12291c;
-    --warn: #fbbf24;
-    --warn-soft: #2b2210;
-    --err: #f87171;
-    --err-soft: #2e1515;
-    --log-bg: #090d15;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.25);
-    color-scheme: dark;
-  }
+@font-face {
+  font-family: "Rubik";
+  src: url("/fonts/Rubik-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Rubik";
+  src: url("/fonts/Rubik-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  --bg: #f4f8f9;
+  --card: #ffffff;
+  --text: #212529;
+  --muted: #6c757d;
+  --border: #dbe6e9;
+  --input: #ffffff;
+
+  /* Teal van etheron.nl; --accent-text is iets donkerder voor leesbare tekst. */
+  --accent: #0c94ab;
+  --accent-text: #0a7d90;
+  --accent-light: #99cfd8;
+  --accent-soft: #e7f4f7;
+  --gradient: linear-gradient(120deg, #99cfd8 0%, #0c94ab 50%);
+
+  /* Groene knoppen van etheron.nl */
+  --cta: #3cc154;
+  --cta-hover: #34a94a;
+
+  --ok: #23863c;
+  --ok-soft: #eaf8ee;
+  --warn: #8a5a00;
+  --warn-soft: #fff5e1;
+  --err: #b42318;
+  --err-soft: #fdecea;
+  --log-bg: #13262b;
+  --log-text: #d6e5e9;
+
+  /* De Etheron-vorm: afgeronde hoeken, rechtsonder recht. */
+  --shape: 10px 10px 0 10px;
+  --shape-large: 28px 28px 0 28px;
+  --shadow: 0 1px 3px rgba(12, 60, 70, 0.06), 0 12px 32px rgba(12, 60, 70, 0.08);
+  color-scheme: light;
 }
 
 * {
@@ -63,30 +73,31 @@ body {
   flex-direction: column;
   background: var(--bg);
   color: var(--text);
-  font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font: 400 16px/1.6 "Rubik", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 }
 
 a {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 h1,
 h2,
 h3 {
+  font-weight: 700;
   line-height: 1.25;
   margin: 0 0 0.5rem;
 }
 
 h1 {
-  font-size: 1.6rem;
+  font-size: 1.75rem;
 }
 
 h2 {
-  font-size: 1.35rem;
+  font-size: 1.4rem;
 }
 
 h3 {
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   margin-top: 1.5rem;
 }
 
@@ -107,9 +118,9 @@ h3 {
 }
 
 .topbar-inner {
-  max-width: 760px;
+  max-width: 800px;
   margin: 0 auto;
-  padding: 0.85rem 16px;
+  padding: 0.9rem 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -119,20 +130,12 @@ h3 {
 .brand {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  font-weight: 700;
-  font-size: 1.1rem;
 }
 
-.brand-mark {
-  display: inline-grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 9px;
-  background: var(--accent);
-  color: var(--accent-text);
-  font-weight: 800;
+.logo {
+  display: block;
+  height: 28px;
+  width: auto;
 }
 
 .server-info {
@@ -142,7 +145,7 @@ h3 {
 }
 
 .footer {
-  max-width: 760px;
+  max-width: 800px;
   width: 100%;
   margin: 0 auto;
   padding: 1.5rem 16px 2rem;
@@ -158,21 +161,42 @@ h3 {
 .container {
   flex: 1;
   width: 100%;
-  max-width: 760px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 1.5rem 16px 0;
 }
 
+.hero {
+  background: var(--gradient);
+  color: #ffffff;
+  border-radius: var(--shape-large);
+  padding: 2rem 2rem 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.hero h1 {
+  font-size: 2.1rem;
+  margin: 0 0 0.35rem;
+}
+
+.hero p {
+  font-weight: 300;
+  font-size: 1.05rem;
+  margin: 0 0 1.5rem;
+  opacity: 0.95;
+}
+
 .card {
   background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 20px 20px 0 20px;
   box-shadow: var(--shadow);
   padding: 2rem;
 }
 
 .lead {
   color: var(--muted);
+  font-weight: 300;
+  font-size: 1.05rem;
   margin: 0 0 1.5rem;
 }
 
@@ -182,11 +206,11 @@ h3 {
   padding: 3rem 0;
 }
 
-/* ---------------- Stappen ---------------- */
+/* ---------------- Stappen (in de hero) ---------------- */
 
 .stepper {
   list-style: none;
-  margin: 0 0 1.25rem;
+  margin: 0;
   padding: 0;
   display: flex;
   gap: 0.5rem;
@@ -198,7 +222,7 @@ h3 {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.85);
   font-size: 0.875rem;
   white-space: nowrap;
 }
@@ -206,29 +230,29 @@ h3 {
 .stepper .num {
   display: inline-grid;
   place-items: center;
-  width: 1.6rem;
-  height: 1.6rem;
+  width: 1.65rem;
+  height: 1.65rem;
   border-radius: 50%;
-  border: 1.5px solid var(--border);
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
   font-size: 0.8rem;
-  font-weight: 600;
-  background: var(--card);
+  font-weight: 700;
 }
 
 .stepper li.current {
-  color: var(--text);
-  font-weight: 600;
+  color: #ffffff;
+  font-weight: 700;
 }
 
 .stepper li.current .num {
-  border-color: var(--accent);
-  background: var(--accent);
+  background: #ffffff;
+  border-color: #ffffff;
   color: var(--accent-text);
 }
 
 .stepper li.done .num {
-  border-color: var(--accent);
-  color: var(--accent);
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #ffffff;
+  color: #ffffff;
 }
 
 /* ---------------- Keuzes ---------------- */
@@ -244,7 +268,8 @@ h3 {
   align-items: flex-start;
   padding: 1rem 1.1rem;
   border: 1.5px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--shape);
+  font-weight: 400;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
 }
@@ -264,12 +289,17 @@ h3 {
 }
 
 .choice input {
-  margin-top: 0.3rem;
+  margin-top: 0.35rem;
+  accent-color: var(--accent);
 }
 
 .choice-body {
   display: grid;
   gap: 0.15rem;
+}
+
+.choice-body strong {
+  font-size: 1.05rem;
 }
 
 .choice-body span {
@@ -292,7 +322,7 @@ fieldset.field {
 label,
 legend {
   display: block;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 0.35rem;
 }
 
@@ -307,7 +337,7 @@ textarea {
   color: var(--text);
   background: var(--input);
   border: 1.5px solid var(--border);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 0.6rem 0.75rem;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -343,13 +373,9 @@ select[aria-invalid="true"] {
 
 .radio input,
 .check input {
-  margin-top: 0.3rem;
+  margin-top: 0.35rem;
   accent-color: var(--accent);
   flex: none;
-}
-
-.choice input {
-  accent-color: var(--accent);
 }
 
 .hint {
@@ -371,11 +397,11 @@ select[aria-invalid="true"] {
 .badge {
   display: inline-block;
   font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--accent);
+  font-weight: 700;
+  color: var(--accent-text);
   background: var(--accent-soft);
   border-radius: 999px;
-  padding: 0.05rem 0.55rem;
+  padding: 0.05rem 0.6rem;
   margin-left: 0.25rem;
   white-space: nowrap;
 }
@@ -402,15 +428,15 @@ select[aria-invalid="true"] {
 
 .advanced summary {
   cursor: pointer;
-  color: var(--accent);
-  font-weight: 600;
+  color: var(--accent-text);
+  font-weight: 700;
   margin-bottom: 1rem;
 }
 
 /* ---------------- Meldingen ---------------- */
 
 .notice {
-  border-radius: 10px;
+  border-radius: var(--shape);
   padding: 0.75rem 1rem;
   background: var(--accent-soft);
   margin: 1rem 0 0;
@@ -448,7 +474,7 @@ select[aria-invalid="true"] {
 
 .dns-result {
   margin: 0.75rem 0;
-  border-radius: 10px;
+  border-radius: var(--shape);
   padding: 0.75rem 1rem;
   font-size: 0.9rem;
 }
@@ -471,7 +497,7 @@ select[aria-invalid="true"] {
 .error-list {
   margin: 1rem 0 0;
   padding: 0.75rem 1rem 0.75rem 2rem;
-  border-radius: 10px;
+  border-radius: var(--shape);
   background: var(--err-soft);
   color: var(--err);
 }
@@ -497,7 +523,7 @@ select[aria-invalid="true"] {
   grid-template-columns: minmax(0, 13rem) minmax(0, 1fr);
   margin: 0;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--shape);
   overflow: hidden;
 }
 
@@ -524,7 +550,8 @@ select[aria-invalid="true"] {
 .summary .group {
   grid-column: 1 / -1;
   font-weight: 700;
-  background: var(--bg);
+  color: var(--accent-text);
+  background: var(--accent-soft);
 }
 
 /* ---------------- Knoppen ---------------- */
@@ -540,46 +567,48 @@ select[aria-invalid="true"] {
 
 .btn {
   font: inherit;
-  font-weight: 600;
-  border-radius: 10px;
-  padding: 0.65rem 1.3rem;
+  font-weight: 700;
+  border-radius: var(--shape);
+  padding: 0.7rem 1.4rem;
   border: 1.5px solid transparent;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s;
 }
 
 .btn.small {
-  padding: 0.4rem 0.9rem;
+  padding: 0.45rem 0.95rem;
   font-size: 0.9rem;
 }
 
 .btn.primary {
-  background: var(--accent);
-  color: var(--accent-text);
+  background: var(--cta);
+  border-color: var(--cta);
+  color: #ffffff;
 }
 
 .btn.primary:hover:not(:disabled) {
-  background: var(--accent-hover);
+  background: var(--cta-hover);
+  border-color: var(--cta-hover);
 }
 
 .btn.secondary {
-  background: transparent;
-  color: var(--text);
-  border-color: var(--border);
-}
-
-.btn.secondary:hover:not(:disabled) {
+  background: #ffffff;
+  color: var(--accent-text);
   border-color: var(--accent);
 }
 
+.btn.secondary:hover:not(:disabled) {
+  background: var(--accent-soft);
+}
+
 .btn:disabled {
-  opacity: 0.55;
+  opacity: 0.6;
   cursor: progress;
 }
 
 .btn:focus-visible,
 .choice:focus-within {
-  outline: 3px solid var(--accent-soft);
+  outline: 3px solid var(--accent-light);
   outline-offset: 2px;
 }
 
@@ -619,7 +648,7 @@ select[aria-invalid="true"] {
 
 .progress li.active {
   color: var(--text);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .progress li.active .icon {
@@ -633,15 +662,15 @@ select[aria-invalid="true"] {
 }
 
 .progress li.done .icon {
-  border-color: var(--ok);
-  background: var(--ok);
-  color: var(--card);
+  border-color: var(--cta);
+  background: var(--cta);
+  color: #ffffff;
 }
 
 .progress li.failed .icon {
   border-color: var(--err);
   background: var(--err);
-  color: var(--card);
+  color: #ffffff;
 }
 
 @keyframes spin {
@@ -658,7 +687,7 @@ select[aria-invalid="true"] {
 }
 
 .result {
-  border-radius: 12px;
+  border-radius: var(--shape);
   padding: 1.1rem 1.25rem;
   margin: 0 0 1.5rem;
 }
@@ -680,7 +709,7 @@ select[aria-invalid="true"] {
 }
 
 .result .big-link {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 700;
   overflow-wrap: anywhere;
 }
@@ -688,14 +717,14 @@ select[aria-invalid="true"] {
 /* Laatste stap na de installatie: bovenaan en opvallend, zodat niemand hem mist. */
 .wings-config {
   border: 2px solid var(--accent);
-  border-radius: 12px;
+  border-radius: var(--shape);
   padding: 1.25rem 1.25rem 0.5rem;
   margin-bottom: 1.5rem;
 }
 
 .wings-config h3 {
   margin-top: 0;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .steps-list {
@@ -717,7 +746,7 @@ select[aria-invalid="true"] {
   margin: 0.75rem 0 0;
   background: var(--log-bg);
   color: var(--log-text);
-  border-radius: 10px;
+  border-radius: var(--shape);
   padding: 0.9rem 1rem;
   max-height: 22rem;
   overflow: auto;
@@ -743,6 +772,15 @@ select[aria-invalid="true"] {
 /* ---------------- Telefoon ---------------- */
 
 @media (max-width: 600px) {
+  .hero {
+    padding: 1.5rem 1.25rem 1.25rem;
+    border-radius: 20px 20px 0 20px;
+  }
+
+  .hero h1 {
+    font-size: 1.6rem;
+  }
+
   .card {
     padding: 1.25rem;
   }
