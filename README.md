@@ -33,10 +33,8 @@ Draai alles als root.
 De makkelijkste route voor klanten: één commando op de server, daarna gaat alles in de browser.
 
 ```bash
-ETHERON_REF=main bash <(curl -fsSL https://raw.githubusercontent.com/etheronhosting/Pterodactyl-install-script-etheron-hosting/main/install.sh) web
+bash <(curl -fsSL https://raw.githubusercontent.com/etheronhosting/Pterodactyl-install-script-etheron-hosting/main/install.sh) web
 ```
-
-`ETHERON_REF=main` is nodig zolang release `v1.0.0` nog niet is getagd; daarna kan het weg (zie hieronder).
 
 Wat er gebeurt:
 
@@ -64,19 +62,17 @@ nip.io werkt alleen met IPv4. Let's Encrypt geeft voor alle nip.io-adressen same
 
 ### Met de one-liner
 
-Werkt zodra de release uit `ETHERON_VERSION` als tag op GitHub staat (zie [Een release maken](#een-release-maken)). De repository moet daarvoor publiek zijn.
-
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/etheronhosting/Pterodactyl-install-script-etheron-hosting/main/install.sh)
 ```
 
-Gebruik `bash <(curl ...)` en niet `curl ... | bash`: de installer stelt vragen en heeft daarvoor de terminal nodig. Het script haalt de release op die in `ETHERON_VERSION` staat en draait die lokaal vanuit een tijdelijke map.
+Gebruik `bash <(curl ...)` en niet `curl ... | bash`: de installer stelt vragen en heeft daarvoor de terminal nodig. Het script downloadt de installer en draait die lokaal vanuit een tijdelijke map. De repository moet daarvoor publiek zijn.
 
-Testen zonder release: met `ETHERON_REF=main` haalt de one-liner de nieuwste code van `main` op in plaats van de release.
+Welke versie je krijgt:
 
-```bash
-ETHERON_REF=main bash <(curl -fsSL https://raw.githubusercontent.com/etheronhosting/Pterodactyl-install-script-etheron-hosting/main/install.sh)
-```
+- Staat de release uit `ETHERON_VERSION` als tag op GitHub, dan krijg je die vaste release.
+- Is die tag er nog niet, dan gebruikt de one-liner de nieuwste code van `main` en meldt hij dat.
+- Een andere versie of branch kies je met `ETHERON_REF`, bijvoorbeeld `ETHERON_REF=main` om na een release nieuwe code te testen, of `ETHERON_REF=v1.0.0` voor een vaste versie.
 
 ### Vanuit een clone
 
@@ -185,7 +181,7 @@ Staat er een `NODE_*`- of `PANEL_*`-instelling in het bestand, dan koppelt `wing
    git push origin main v1.0.0
    ```
 
-De one-liner via `main` installeert daarna de release uit `ETHERON_VERSION`. Wil je een niet-uitgebrachte versie testen, zet dan `ETHERON_REF` op een branch: `ETHERON_REF=main bash <(curl ...)`.
+De one-liner installeert daarna de release uit `ETHERON_VERSION`. Wil je een niet-uitgebrachte versie testen, zet dan `ETHERON_REF` op een branch: `ETHERON_REF=main bash <(curl ...)`.
 
 ## Testen
 

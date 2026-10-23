@@ -29,7 +29,9 @@ export ETHERON_VERSION="v1.0.0"
 # GitHub-repository met de releases van dit script, als "eigenaar/naam".
 ETHERON_REPO="${ETHERON_REPO:-etheronhosting/Pterodactyl-install-script-etheron-hosting}"
 
-# Release-tag (of branch) die de one-liner downloadt.
+# Release-tag (of branch) die de one-liner downloadt. Zonder ETHERON_REF is dat de
+# release uit ETHERON_VERSION, en zolang die nog niet bestaat de nieuwste code van main.
+ETHERON_REF_GIVEN="${ETHERON_REF:-}"
 ETHERON_REF="${ETHERON_REF:-$ETHERON_VERSION}"
 
 usage() {
@@ -51,6 +53,13 @@ Opties:
 
 Voorbeeld: install.sh beide --config /root/etheron.conf
 EOF
+}
+
+# Downloadt de broncode van een release of branch; geeft de HTTP-status terug.
+download_ref() {
+  # Bij een netwerkfout schrijft curl zelf 000 als status.
+  curl -sSL -o "$BOOTSTRAP_DIR/installer.tar.gz" -w '%{http_code}' \
+    "https://github.com/$ETHERON_REPO/archive/$1.tar.gz" || true
 }
 
 # Bij 'bash <(curl ...)' staat de rest van het project niet naast dit script.
@@ -76,8 +85,13 @@ bootstrap() {
   trap 'rm -rf "$BOOTSTRAP_DIR"' EXIT
 
   echo "* Etheron-installer $ETHERON_REF downloaden van github.com/$ETHERON_REPO..."
-  http_code=$(curl -sSL -o "$BOOTSTRAP_DIR/installer.tar.gz" -w '%{http_code}' \
-    "https://github.com/$ETHERON_REPO/archive/$ETHERON_REF.tar.gz") || http_code="000"
+  http_code=$(download_ref "$ETHERON_REF")
+  # Nog geen release getagd en geen versie opgegeven: gebruik de nieuwste code.
+  if [ "$http_code" == "404" ] && [ -z "$ETHERON_REF_GIVEN" ]; then
+    echo "* Release $ETHERON_REF staat nog niet op GitHub; de nieuwste versie (main) wordt gebruikt."
+    ETHERON_REF="main"
+    http_code=$(download_ref "$ETHERON_REF")
+  fi
   if [ "$http_code" == "404" ]; then
     echo "* FOUT: versie $ETHERON_REF van de installer staat (nog) niet op GitHub." >&2
     echo "* Wil je de nieuwste code van main gebruiken? Zet dan ETHERON_REF=main voor het commando:" >&2

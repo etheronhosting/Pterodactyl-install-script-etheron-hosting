@@ -489,7 +489,7 @@ perform_link() {
   fi
 
   if [ ! -x /usr/local/bin/wings ]; then
-    error "Wings is nog niet geïnstalleerd op deze server."
+    error "Wings is nog niet geïnstalleerd op deze server. Installeer eerst Wings (install.sh wings of beide, of via de webinstaller met install.sh web)."
     exit 1
   fi
   if [ -s "$WINGS_CONFIG" ]; then
