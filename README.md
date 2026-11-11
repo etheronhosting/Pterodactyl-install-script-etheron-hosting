@@ -4,7 +4,7 @@
 ![Versie](https://img.shields.io/badge/versie-1.0.1-0c94ab)
 [![Licentie: GPL-3.0](https://img.shields.io/badge/licentie-GPL--3.0-blue)](LICENSE)
 
-Installeer [Pterodactyl](https://pterodactyl.io/) Panel en Wings met één commando, via de browser of in de terminal.
+Installeer [Pterodactyl](https://pterodactyl.io/) Panel en Wings met één commando. Je doet alles gewoon via je browser, geen technische kennis nodig.
 
 > Niet verbonden aan het officiële Pterodactyl-project. Pterodactyl® is een geregistreerd handelsmerk van zijn eigenaren.
 
@@ -14,49 +14,60 @@ Installeer [Pterodactyl](https://pterodactyl.io/) Panel en Wings met één comma
 - [Wat de installer doet](#wat-de-installer-doet)
 - [Vereisten](#vereisten)
 - [Installeren via de browser](#installeren-via-de-browser)
-- [Installeren in de terminal](#installeren-in-de-terminal)
 - [Adres en HTTPS](#adres-en-https)
 - [Wings koppelen aan het panel](#wings-koppelen-aan-het-panel)
 - [Databases voor gameservers](#databases-voor-gameservers)
 - [Poorten](#poorten)
-- [Verwijderen](#verwijderen)
 - [Credits](#credits)
 - [Licentie](#licentie)
 
 ## Snel aan de slag
 
-Log als **root** in op een verse server en kies een van de twee manieren.
+Volg deze stappen op een **verse server** (dus zonder andere software erop). Je logt in als **root** via SSH (bijvoorbeeld met PuTTY of de terminal van je computer).
 
-**Via de browser (aanbevolen):** de installer start een wizard en geeft je een link.
+**Stap 1 — Installeer eerst `curl`.** Dit heb je nodig om de installer binnen te halen. Kopieer en plak dit commando:
+
+Voor Ubuntu of Debian:
+
+```bash
+apt update && apt install -y curl
+```
+
+Voor Rocky Linux of AlmaLinux:
+
+```bash
+dnf install -y curl
+```
+
+**Stap 2 — Start de installer.** Kopieer en plak dit commando:
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/etheronhosting/Pterodactyl-install-script-etheron-hosting/main/install.sh) web
 ```
 
-**In de terminal:** je krijgt een menu met vragen.
+**Stap 3 — Open de link.** Er verschijnt een link in de terminal, bijvoorbeeld `https://installer-203-0-113-10.sslip.io:8443/?token=…`. Klik erop of kopieer hem naar je browser. De rest wijst zich vanzelf: je kiest wat je wilt installeren en de installer doet de rest. Je mag het SSH-venster daarna rustig sluiten.
 
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/etheronhosting/Pterodactyl-install-script-etheron-hosting/main/install.sh)
-```
-
-Gebruik altijd `bash <(curl ...)` en niet `curl ... | bash`; de installer heeft de terminal nodig. Op een minimale server zonder curl installeer je dat eerst met `apt install -y curl` of `dnf install -y curl`.
+Klaar! De installatie gaat volledig via je browser verder.
 
 ## Wat de installer doet
 
+De installer regelt alles voor je, zodat jij je geen zorgen hoeft te maken over technische zaken:
+
 | Onderdeel | Wat er gebeurt |
 | --------- | -------------- |
-| **Panel** | PHP 8.3, MariaDB, Redis (Valkey op EL10), nginx, Composer, cronjob en queue-worker (`pteroq`), plus het eerste beheerdersaccount. |
-| **Wings** | Docker en Wings met een systemd-service. |
-| **Panel en Wings** | Beide op één server, met hetzelfde adres en certificaat. |
-| **Node koppelen** | Locatie, node en poorten voor gameservers aanmaken in het panel, de configuratie van Wings neerzetten en Wings starten. |
-| **Databases** | Een databasehost voor gameservers instellen en in het panel zetten. |
-| **HTTPS** | Let's Encrypt, een eigen certificaat of geen HTTPS; zonder eigen domein een gratis nip.io-adres. |
-| **Firewall** | UFW (Debian/Ubuntu) of firewalld (Rocky/AlmaLinux), met alleen de poorten die nodig zijn en de SSH-poort die sshd echt gebruikt. |
-| **Verwijderen** | Panel en/of Wings weer van de server halen. |
+| **Panel** | De bediening van Pterodactyl (waar jij en je klanten gameservers beheren), plus je eerste beheerdersaccount. |
+| **Wings** | Het programma dat de gameservers zelf draait. |
+| **Panel en Wings** | Beide samen op één server, kant-en-klaar. |
+| **Node koppelen** | De server automatisch aan het panel koppelen, inclusief poorten voor gameservers. |
+| **Databases** | Een databasehost voor gameservers instellen en direct in het panel zetten. |
+| **HTTPS** | Gratis beveiligd verbinding (Let's Encrypt), of een eigen certificaat. Geen eigen domein? Dan krijg je een gratis adres. |
+| **Firewall** | Alleen de poorten die echt nodig zijn, gaan open. De rest blijft dicht. |
 
-Etheron-standaarden: tijdzone `Europe/Amsterdam` en telemetrie standaard uit. Alle instellingen worden gecontroleerd voordat er iets wordt geïnstalleerd.
+Standaard: tijdzone `Europe/Amsterdam` en telemetrie uit. Alles wordt gecontroleerd voordat er iets wordt geïnstalleerd.
 
 ## Vereisten
+
+Je server moet een van deze besturingssystemen hebben:
 
 | Besturingssysteem | Versies |
 | ----------------- | ------- |
@@ -65,113 +76,81 @@ Etheron-standaarden: tijdzone `Europe/Amsterdam` en telemetrie standaard uit. Al
 | Rocky Linux | 8, 9, 10 |
 | AlmaLinux | 8, 9, 10 |
 
-- **Architectuur:** x86_64 of arm64.
-- **Een verse server:** de installer doet alleen nieuwe installaties. Upgraden van een bestaand panel doe je met de [officiële handleiding](https://pterodactyl.io/panel/1.0/updating.html).
-- **Root-toegang:** log in als root, of word root met `sudo -i`.
-- **Poorten bij je hostingprovider:** heeft je provider een eigen firewall, zet daar dezelfde poorten open als in [Poorten](#poorten).
-- **Panel-versie:** standaard versie 1 (stabiel). Versie 2 is te kiezen, maar nog experimenteel (pre-release).
+Verder heb je nodig:
+
+- **Een verse server** (x86_64 of arm64). De installer werkt alleen op een lege server. Heb je al een panel draaien? Gebruik dan de [officiële handleiding om te upgraden](https://pterodactyl.io/panel/1.0/updating.html).
+- **Root-toegang.** Log in als `root`, of word root met `sudo -i`.
+- **Poorten open bij je hostingprovider.** Heeft je provider een eigen firewall? Zet daar de poorten open die bij [Poorten](#poorten) staan.
 
 ## Installeren via de browser
 
-De webinstaller is bedoeld voor klanten: één commando op de server, de rest gaat in de browser.
+Als je op stap 2 uit [Snel aan de slag](#snel-aan-de-slag) het commando uitvoert, gebeurt dit:
 
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/etheronhosting/Pterodactyl-install-script-etheron-hosting/main/install.sh) web
-```
+1. **De installer start.** Hij zet Python en OpenSSL klaar en vraagt een gratis certificaat aan. Daarna start hij de wizard op poort 8443.
+2. **Je krijgt een link.** In de terminal verschijnt een link met een eenmalige toegangscode. Alleen met die link kom je op de wizard.
+3. **Open de link in je browser.** Je kiest wat je wilt installeren (Panel, Wings of beide) en hoe de server bereikbaar moet zijn:
+   - **Je eigen domein** (bijv. `panel.jouwdomein.nl`);
+   - **Een gratis adres**, als je geen domein hebt;
+   - **Alleen het IP-adres** (alleen om te testen).
+4. **Vul je gegevens in.** Je maakt een beheerdersaccount en vult de Wings-opties in. De installer controleert alles voordat er iets wordt geïnstalleerd.
+5. **De installatie loopt.** Je ziet live wat er gebeurt. Je mag de pagina sluiten en later weer openen met dezelfde link.
+6. **Laatste stap.** Klik op **Node aanmaken en Wings starten**. Klaar!
 
-1. **Starten.** De installer zet Python 3 en OpenSSL klaar en vraagt een gratis certificaat van Let's Encrypt aan voor `installer-<ip>.sslip.io`. Daarna start hij de wizard op poort 8443 als systemd-service (`etheron-webinstaller`). Het SSH-venster mag daarna dicht.
-2. **Link openen.** In de terminal verschijnt een link met een eenmalige toegangscode, bijvoorbeeld `https://installer-203-0-113-10.sslip.io:8443/?token=…`.
-3. **Wizard invullen.** Kies wat je wilt installeren (Panel, Wings of beide) en hoe de server bereikbaar moet zijn (eigen domein, gratis nip.io-adres of alleen IP). Vul daarna het beheerdersaccount en de Wings-opties in.
-4. **Installatie volgen.** De voortgang is live te zien. De pagina mag dicht en later opnieuw open met dezelfde link.
-5. **Laatste stap.** Bovenaan de eindpagina staat de knop **Node aanmaken en Wings starten**, die Wings aan het panel koppelt.
+**De webinstaller sluit zichzelf af** 30 minuten na de installatie, of na een uur zonder gebruik, of na 24 uur, of als je op **Webinstaller afsluiten** klikt. Zo blijft hij niet onnodig open staan.
 
-**De webinstaller stopt vanzelf** 30 minuten na de installatie, na een uur zonder gebruik, na 24 uur, of als je op **Webinstaller afsluiten** klikt. Zelf stoppen kan met `systemctl stop etheron-webinstaller`.
-
-## Installeren in de terminal
-
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/etheronhosting/Pterodactyl-install-script-etheron-hosting/main/install.sh) [actie]
-```
-
-Zonder actie verschijnt een menu.
-
-| Actie | Wat het doet |
-| ----- | ------------ |
-| `web` | Webinstaller starten (installeren via de browser) |
-| `panel` | Pterodactyl Panel installeren |
-| `wings` | Wings installeren |
-| `beide` | Panel en Wings op dezelfde server installeren |
-| `verwijderen` | Panel en/of Wings verwijderen |
-
-**Logbestand.** Alle uitvoer van de installatie staat ook in `/var/log/etheron-installer.log` (alleen leesbaar voor root).
+**Krijg je een waarschuwing over het certificaat?** Dat kan gebeuren als poort 80 niet open stond. Je mag dan rustig doorklikken; de vingerafdruk van het certificaat staat in de terminal, zodat je kunt controleren of het klopt.
 
 ## Adres en HTTPS
 
-Het panel (en Wings) kan op drie manieren bereikbaar zijn:
+De installer kan je panel op drie manieren bereikbaar maken:
 
 | Keuze | Adres | HTTPS |
 | ----- | ----- | ----- |
-| **Eigen domein** | bijv. `panel.jouwdomein.nl`, met een A-record naar de server | Let's Encrypt (aanbevolen), een eigen certificaat of geen |
-| **Gratis nip.io-adres** | bijv. `203-0-113-10.nip.io` of `mijnpanel-203-0-113-10.nip.io` | Let's Encrypt |
-| **Alleen IP-adres** | bijv. `203.0.113.10` | Geen; alleen geschikt om te testen |
+| **Eigen domein** | bijv. `panel.jouwdomein.nl` (zet een A-record naar de server) | Gratis via Let's Encrypt (aanbevolen) |
+| **Gratis adres (nip.io)** | bijv. `203-0-113-10.nip.io` | Gratis via Let's Encrypt |
+| **Alleen IP-adres** | bijv. `203.0.113.10` | Geen; alleen om te testen |
 
-**Geen eigen domein?** [nip.io](https://nip.io/) haalt het IP-adres uit de naam, dus het adres wijst automatisch naar je server. Je hoeft geen DNS-records in te stellen.
+**Geen eigen domein?** Geen probleem. [nip.io](https://nip.io/) geeft je gratis een adres dat automatisch naar je server wijst. Je hoeft helemaal niets in te stellen.
 
-**Controle vooraf.** Voor een certificaat controleert de installer of alle A- en AAAA-records naar de server wijzen. Gebruik je Cloudflare, zet dan de proxy (oranje wolk) uit voor dat record.
+**Gebruik je Cloudflare?** Zet de proxy (het oranje wolkje) uit voor het record, anders lukt het certificaat niet.
 
-**Eigen certificaat.** Zet het certificaat in `/etc/ssl/<domein>.pem` en de sleutel in `/etc/ssl/<domein>.key`, en herstart daarna nginx: `nginx -t && systemctl restart nginx`.
+**Eigen certificaat gebruiken?** Zet het certificaat in `/etc/ssl/<domein>.pem` en de sleutel in `/etc/ssl/<domein>.key`, en herstart nginx: `nginx -t && systemctl restart nginx`.
 
 ## Wings koppelen aan het panel
 
-Na een Wings-installatie koppelt de installer de node met één klik (webinstaller) of automatisch (terminal). Dat doet hij zo:
+Na de installatie koppelt de installer Wings met één klik aan het panel. Wat er dan gebeurt:
 
-1. Een **locatie** aanmaken (standaard `nl`); bestaat die al, dan gebruikt hij die.
-2. Een **node** aanmaken, met het geheugen en de vrije schijfruimte van de server.
-3. **Poorten voor gameservers** toevoegen (standaard `25565-25600`) en die in de firewall openzetten, voor TCP en UDP.
-4. De **configuratie van Wings** neerzetten, **Wings starten** en controleren of het draait.
+1. Er wordt een **locatie** aangemaakt (standaard `nl`).
+2. Er wordt een **node** aangemaakt, met het geheugen en de vrije schijfruimte van je server.
+3. **Poorten voor gameservers** worden toegevoegd (standaard `25565-25600`) en in de firewall opengezet.
+4. De **configuratie van Wings** wordt neergezet en Wings wordt gestart.
 
-**Staat het panel op een andere server?** Dan heb je een API-sleutel nodig. Die maak je in het panel via **Admin → Application API → Create New**. Zet **Locations**, **Nodes** en **Allocations** op Read & Write.
-
-**Liever zelf koppelen?** In de webinstaller kun je ook de configuratie van de node uit het panel plakken (tabblad *Configuration* van de node). De wizard zet die dan neer en start Wings.
+**Staat je panel op een andere server?** Dan heb je een API-sleutel nodig uit het panel (**Admin → Application API → Create New**). Zet **Locations**, **Nodes** en **Allocations** op Read & Write.
 
 ## Databases voor gameservers
 
-Bij Wings kies je tussen drie opties:
+Bij Wings kies je uit drie opties:
 
 | Optie | Wat er gebeurt |
 | ----- | -------------- |
-| **Automatisch instellen** | De installer maakt een databasegebruiker aan en zet de databasehost in het panel. Alleen als Panel en Wings op dezelfde server staan. |
-| **Zelf instellen** | Je kiest zelf gebruikersnaam en wachtwoord. Daarna voeg je de databasehost zelf toe onder **Admin → Databases**. |
+| **Automatisch** | De installer maakt alles zelf aan en zet de databasehost in het panel. (Alleen als Panel en Wings op dezelfde server staan.) |
+| **Zelf instellen** | Jij kiest zelf gebruikersnaam en wachtwoord. Daarna voeg je de databasehost toe via **Admin → Databases**. |
 | **Niet nodig** | Er wordt niets ingesteld. |
 
-Bij "Automatisch" draaien gameservers in Docker en bereiken MariaDB via de Docker-gateway (standaard `172.18.0.1`). De firewall laat poort 3306 alleen toe vanuit het Docker-netwerk, dus van buiten blijft die dicht.
+Kies je "Automatisch", dan is de database alleen bereikbaar vanuit de gameservers zelf. Van buitenaf blijft poort 3306 dicht.
 
 ## Poorten
 
-De installer zet deze poorten open als de firewall wordt ingesteld. Heeft je hostingprovider een eigen firewall, zet ze daar ook open.
+De installer zet deze poorten open. Heeft je hostingprovider een eigen firewall? Zet ze daar ook open, anders werkt het niet.
 
 | Onderdeel | Poorten | Wanneer |
 | --------- | ------- | ------- |
-| SSH | de poort van sshd (meestal 22) | altijd |
+| SSH | meestal 22 | altijd |
 | Panel | 80, 443 (TCP) | panel |
 | Wings | 8080, 2022 (TCP) | Wings |
-| Wings met Let's Encrypt | 80, 443 (TCP) | certificaat voor Wings |
-| Gameservers | standaard 25565-25600 (TCP en UDP) | bij het koppelen van de node |
-| Databases | 3306 (TCP), alleen vanuit het Docker-netwerk | databases automatisch |
+| Wings met HTTPS | 80, 443 (TCP) | certificaat voor Wings |
+| Gameservers | standaard 25565-25600 (TCP en UDP) | bij het koppelen |
 | Webinstaller | 8443 (TCP), tijdelijk | zolang de webinstaller draait |
-| Webinstaller | 80 (TCP), kort | tijdens de certificaataanvraag |
-
-## Verwijderen
-
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/etheronhosting/Pterodactyl-install-script-etheron-hosting/main/install.sh) verwijderen
-```
-
-**Panel:** panelbestanden, nginx-configuratie, queue-worker en cronjob. Na een vraag ook de database en de databasegebruiker van het panel.
-
-**Wings:** containers van gameservers (gedeelde images en volumes blijven staan), de bestanden, de service en de MariaDB-instelling voor databases van buitenaf.
-
-**Wat blijft staan:** Composer, Docker, MariaDB, nginx, PHP en de gebruikers van databasehosts.
 
 ## Credits
 
